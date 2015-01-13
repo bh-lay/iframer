@@ -3,12 +3,21 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
+<script type="text/javascript">
+if(top == window){
+	window.location.href = '/example/app.html#!' + location.pathname + location.search + location.hash; 
+}
+</script>
+	<link rel="stylesheet" href="/example/style.css">
 </head>
 <body>
 	<h1>index</h1>
-	<a class="spa-link" href="index.html">index</a>
-	<a class="spa-link" href="about.html">about</a>
-	<a class="spa-link" href="blog/cssSkill.html">blog/cssSkill</a>
-	<a class="spa-link" href="/example/myProfile.html">myProfile</a>
+	<div>
+		<a href="http://baidu.com">baidu <span>http://baidu.com</span></a>
+		<a class="spa-link active" href="index.html">index <span>index.html</span></a>
+		<a class="spa-link" href="about.html">about <span>about.html</span></a>
+		<a class="spa-link" href="blog/cssSkill.html">blog/cssSkill <span>blog/cssSkill.html</span></a>
+		<a class="spa-link" href="/example/myProfile.html">myProfile <span>/example/myProfile.html</span></a>
+	</div>
 </body>
 </html>
