@@ -2,12 +2,15 @@
 	var utils = utils_factory(global,doc);
 	var activeIframe;
 	/**
-	 * 转换href相对地址
-	 *	如 '../../blog/cssSkill.html','blog/cssSkill.html'
+	 * 转换各类地址至相对站点根目录地址
+	 *	如  'http://xxx.xx/blog/cssSkill.html','https://xxx.xx/blog/cssSkill.html',
+	 *		'//xxx.xx/blog/cssSkill.html'
+	 *		'../../blog/cssSkill.html',
+	 *		'blog/cssSkill.html'
 	 **/
 	function hrefToAbsolute(src,base_path){
 		/**
-		 * 若包含域名
+		 * 截断域名
 		 *	http://
 		 *	https://
 		 *	//
@@ -30,7 +33,8 @@
 			});
 		}
 		return base_path + src; 
-	} 
+	}
+	//创建新的页面（同时销毁上一个页面）
 	function createNewPage(url){
 		var iframe = document.createElement('iframe'); 
 		var oldIframe = activeIframe;
@@ -47,22 +51,26 @@
 			document.body.appendChild(iframe);
 		//	utils.fadeIn(iframe,500);
 		}
+		//绑定iframe load事件
 		utils.bind(iframe,'load',function(){
-			utils.bind(iframe.contentWindow.document,'click','.spa-link',function(evt){
+			var iWindow = iframe.contentWindow;
+			//监听iframe内 单页按钮点击事件
+			utils.bind(iWindow.document,'click','.spa-link',function(evt){
 				var href = this.getAttribute('href');
-				var url = hrefToAbsolute(href,iframe.contentWindow.location.pathname);
+				var url = hrefToAbsolute(href,iWindow.location.pathname);
 				if(url.length < 1){
 					return
 				}
 				pushHash(url);
-				var evt = evt || iframe.contentWindow.event; 
+				var evt = evt || iWindow.event; 
 				if (evt.preventDefault) { 
 					evt.preventDefault(); 
 				} else { 
 					evt.returnValue = false; 
 				}
 			});
-			utils.bind(iframe.contentWindow.document,'mousedown','a',function(evt){
+			//监听iframe内 所有链接点击事件
+			utils.bind(iWindow.document,'mousedown','a',function(evt){
 				var target = this.getAttribute('target');
 				if(!target){
 					this.setAttribute('target','_blank');
@@ -70,10 +78,12 @@
 			});
 		});
 	}
+	//修改页面hash锚点
 	function pushHash(url){
 		this.url = url;
 		window.location.hash = '!' + url;
 	}
+	//监听hashchange事件
 	utils.onhashchange(function(url){
 		createNewPage(url)
 	});
