@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-15 23:52
+ * @modified 2015-1-16 00:16
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -32,9 +32,8 @@
 					
 					private_beforeTitleChange = utils.TypeOf(param.private_beforeTitleChange) == "function" ? param.private_beforeTitleChange : null;
 					
-					if((window.location.hash || '#!').length <= 2){
-						window.location.hash = '!' + this.default_url;
-					}
+					var firstHash = (location.hash || '#!').replace(/^#\!/,'');
+					window.location.hash = '!' + (firstHash.length ? hrefToAbsolute(firstHash,location.pathname) : this.default_url);
                     //监听hashchange事件
                     utils.onhashchange(function(url){
                         url = url || IFRAMER.default_url;
