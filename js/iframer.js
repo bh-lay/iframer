@@ -30,9 +30,11 @@
                     this.default_url = utils.TypeOf(param.default_url) == 'string' ? param.default_url : '/';
 					
 					var hash = (window.location.hash || '#!').replace(/^#!/,'');
+					
 					window.location.hash = '!' + removeDomain(hash);
                     //监听hashchange事件
                     utils.onhashchange(function(url){
+                    	console.log('url',url);
                         url = url || IFRAMER.default_url;
                         createNewPage(url);
                     });
