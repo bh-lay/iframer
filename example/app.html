@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE HTML>
+<html lang="en-US">
 <head>
-	<meta charset="UTF-8">
+    <meta charset="UTF-8">
 	<title>Document</title>
 </head>
 <body>
@@ -11,20 +11,28 @@
 		padding 0;
 		height: 100%;
 	}
-    .sap-container{
+    #sap-container{
         position: relative;
 		width: 100%;
 		height: 100%;
 		background: #aaa;
     }
-	.sap-container iframe{
+	#sap-container iframe{
 		display: block;
 		width: 100%;
 		height: 100%;
 		border: none;
 	}
 </style>
-<div class="sap-container"></div>
+<div id="sap-container"></div>
 <script type="text/javascript" src="../iframer.js"></script>
+<script type="text/javascript">
+    iframer.init({
+        container : document.getElementById('sap-container'),
+        beforeTitleChange : function(title){
+          return 'iframer-' + title
+        }
+    });
+</script>
 </body>
 </html>

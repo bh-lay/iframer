@@ -1,8 +1,48 @@
-(function(window,document,utils_factory){
+(function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
+    window.iframer = window.iframer || iframer_factory(window,document,utils);
+})(window,document,function(window,document,utils){
     
-	var activeIframe,
-        iframe_container = utils.findByClassName(document,'sap-container')[0];
+    var activeIframe,
+        is_inited = false;
+    //IFRAMER 主对象
+    var IFRAMER = {
+        init : function (param){
+            if(is_inited){
+                console && console.error &&  console.error('iframer should be initialized only once');
+            }else{
+                var param = param || {};
+                if(!param.container){
+                    console && console.error &&  console.error('missing arguement "container"');
+                }else if(!utils.isDOM(param.container)){
+                    console && console.error &&  console.error('arguement "container" must be a dom');
+                }else{
+                    this.container = param.container;
+                    this.beforeTitleChange = utils.TypeOf(param.beforeTitleChange) == "function" ? param.beforeTitleChange : null;
+                    //监听hashchange事件
+                    utils.onhashchange(function(url){
+                        createNewPage(url);
+                    });
+                    is_inited = true;
+                }
+            }
+        },
+        container : null,
+        beforeTitleChange : null,
+         //修改主页面title
+        updateTitle: function (title){
+            if(this.beforeTitleChange){
+                var newTitle = this.beforeTitleChange(title);
+                title = newTitle ? newTitle : title;
+            }
+            document.title = title;
+        },
+        //修改页面hash锚点
+        jumpTo : function (url){
+            this.url = url;
+            window.location.hash = '!' + url;
+        }
+    };
 	/**
 	 * 转换各类地址至相对站点根目录地址
 	 *	如  'http://xxx.xx/blog/cssSkill.html','https://xxx.xx/blog/cssSkill.html',
@@ -36,26 +76,51 @@
 		}
 		return base_path + src; 
 	}
-	//创建新的页面（同时销毁上一个页面）
-	function createNewPage(url){
-		var iframe = document.createElement('iframe'); 
-		var oldIframe = activeIframe;
-		activeIframe = iframe;
-		iframe.src= url;
+    //销毁上一个页面
+    function destoryOldPage(callback){
+        var oldIframe = activeIframe;
 		if(oldIframe){
 			utils.fadeOut(oldIframe,100,function(){
 				//移除老的iframe
 				utils.removeNode(oldIframe);
-				iframe_container.appendChild(iframe);
-				utils.fadeIn(iframe,500);
+				callback && callback();
 			});
 		}else{
-			iframe_container.appendChild(iframe);
-		//	utils.fadeIn(iframe,500);
+			callback && callback()
 		}
-		//绑定iframe load事件
-		utils.bind(iframe,'load',function(){
+    }
+	//创建新的页面
+	function createNewPage(url){
+		var iframe = document.createElement('iframe'); 
+		iframe.src= url;
+        var isLoaded = false,
+            isDestoried = false,
+            isFadeIn = false;
+        destoryOldPage(function(){
+            IFRAMER.container.appendChild(iframe);
+            isDestoried = true;
+            if(isLoaded && !isFadeIn){
+                utils.fadeIn(iframe,500);
+            }
+        });
+        //监听事件
+		bindEventsForIframe(iframe,function(){
+            isLoaded = true;
+            if(isDestoried && !isFadeIn){
+                utils.fadeIn(iframe,500);
+            }
+        });
+        //更新当前iframe标记
+		activeIframe = iframe;
+	}
+    //绑定iframe事件
+    function bindEventsForIframe(iframe,onload){
+        utils.bind(iframe,'load',function(){
+            onload && onload();
+            //子window对象
 			var iWindow = iframe.contentWindow;
+            //更新网页标题
+            IFRAMER.updateTitle(iWindow.document.title);
 			//监听iframe内 单页按钮点击事件
 			utils.bind(iWindow.document,'click','.spa-link',function(evt){
 				var href = this.getAttribute('href');
@@ -63,7 +128,7 @@
 				if(url.length < 1){
 					return
 				}
-				pushHash(url);
+				IFRAMER.jumpTo(url);
 				var evt = evt || iWindow.event; 
 				if (evt.preventDefault) { 
 					evt.preventDefault(); 
@@ -79,17 +144,10 @@
 				}
 			});
 		});
-	}
-	//修改页面hash锚点
-	function pushHash(url){
-		this.url = url;
-		window.location.hash = '!' + url;
-	}
-	//监听hashchange事件
-	utils.onhashchange(function(url){
-		createNewPage(url)
-	});
-})(window,document,function (window,document) {
+    }
+    
+    return IFRAMER;
+},function (window,document) {
 	/**
 	 * 判断对象类型
 	 * string number array
@@ -463,6 +521,11 @@
 				dom.className = dom.className.replace(reg, ' ');
 			}
 		},
+        isDOM : ( typeof HTMLElement === 'object' ) ? function(obj){
+            return obj instanceof HTMLElement;
+        } : function(obj){
+            return obj && typeof obj === 'object' && obj.nodeType === 1 && typeof obj.nodeName === 'string';
+        },
 		/**
 		 * 页面加载
 		 */
