@@ -164,6 +164,7 @@ body {
 .navigation a:hover span {
   top: -30px;
   opacity: 1;
+  filter: alpha(opacity=100);
 }
 .navigation span {
   position: absolute;
@@ -176,6 +177,7 @@ body {
   font-size: 12px;
   color: #fff;
   opacity: 0;
+  filter: alpha(opacity=0);
   transition: all 0.1s ease-out;
   -moz-transition: all 0.1s ease-out;
   -webkit-transition: all 0.1s ease-out;

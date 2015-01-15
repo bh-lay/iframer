@@ -15,7 +15,12 @@
 	-webkit-transform: @input;
 	-o-transform: @input;
 }
-
+.opacity(@opacity) {
+  opacity: @opacity;
+  // IE8 filter
+  @opacity-ie: (@opacity * 100);
+  filter: ~"alpha(opacity=@{opacity-ie})";
+}
 
 .rotate(@rt:7.5deg){
 	-moz-transform: rotate(@rt);

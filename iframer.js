@@ -1,3 +1,9 @@
+/**
+ * @author bh-lay
+ * @github https://github.com/bh-lay/iframer/
+ * @modified 2015-1-15 13:09
+ *  location fox
+ */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
     window.iframer = window.iframer || iframer_factory(window,document,utils);
@@ -7,6 +13,8 @@
         is_inited = false;
     //IFRAMER 主对象
     var IFRAMER = {
+        default_url : '/',
+        link_class : null,
         init : function (param){
             if(is_inited){
                 console && console.error &&  console.error('iframer should be initialized only once');
@@ -19,6 +27,7 @@
                 }else{
                     this.container = param.container;
                     this.beforeTitleChange = utils.TypeOf(param.beforeTitleChange) == "function" ? param.beforeTitleChange : null;
+                    this.link_class = utils.TypeOf(param.link_class) == 'string' ? param.link_class : 'spa-linkws';
                     //监听hashchange事件
                     utils.onhashchange(function(url){
                         createNewPage(url);
@@ -27,7 +36,9 @@
                 }
             }
         },
+        //承载iframe的dom
         container : null,
+        //修改title事件
         beforeTitleChange : null,
          //修改主页面title
         updateTitle: function (title){
@@ -37,9 +48,16 @@
             }
             document.title = title;
         },
-        //修改页面hash锚点
-        jumpTo : function (url){
-            this.url = url;
+        /**
+         * 修改页面hash锚点
+         *  win为调用者所在的 windows
+         */
+        jumpTo : function (url,win){
+            win = win || window;
+            url = hrefToAbsolute(url,win.location.pathname);
+            if(url.length < 1){
+                return
+            }
             window.location.hash = '!' + url;
         }
     };
@@ -122,26 +140,24 @@
             //更新网页标题
             IFRAMER.updateTitle(iWindow.document.title);
 			//监听iframe内 单页按钮点击事件
-			utils.bind(iWindow.document,'click','.spa-link',function(evt){
-				var href = this.getAttribute('href');
-				var url = hrefToAbsolute(href,iWindow.location.pathname);
-				if(url.length < 1){
-					return
-				}
-				IFRAMER.jumpTo(url);
-				var evt = evt || iWindow.event; 
-				if (evt.preventDefault) { 
-					evt.preventDefault(); 
-				} else { 
-					evt.returnValue = false; 
-				}
-			});
-			//监听iframe内 所有链接点击事件
 			utils.bind(iWindow.document,'mousedown','a',function(evt){
 				var target = this.getAttribute('target');
 				if(!target){
 					this.setAttribute('target','_blank');
 				}
+			});
+			utils.bind(iWindow.document,'click','.' + IFRAMER.link_class,function(evt){
+				 //检测是否为预定class
+              //  if(utils.hasClass(this,IFRAMER.link_class)){
+                    var href = this.getAttribute('href');
+                    IFRAMER.jumpTo(href,iWindow);
+				    var evt = evt || iWindow.event; 
+				    if (evt.preventDefault) { 
+                        evt.preventDefault(); 
+				    } else { 
+					   evt.returnValue = false; 
+                    }
+            //    }
 			});
 		});
     }
@@ -477,7 +493,7 @@
 		var className,tagName,fn;
 		if(typeof(a) == 'string'){
 			fn = b;
-			if(a[0] == '.'){
+			if(a.charAt(0) == '.'){
 				className = a.replace(/^\./,'');
 				callback = function(e){
 					var bingoDom = checkEventForClass(e,className,elem);

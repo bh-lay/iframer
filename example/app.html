@@ -21,7 +21,7 @@
 		display: block;
 		width: 100%;
 		height: 100%;
-		border: none;
+		border: none;  
 	}
 </style>
 <div id="sap-container"></div>
@@ -29,6 +29,7 @@
 <script type="text/javascript">
     iframer.init({
         container : document.getElementById('sap-container'),
+        link_class : 'spa-link',
         beforeTitleChange : function(title){
           return 'iframer-' + title
         }
