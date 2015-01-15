@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+	<title>简介</title>
+    <script type="text/javascript">
+        (function(){
+            var config = {
+                //配置单页所在的路径
+                url : '/app.html'
+            };
+              //判断是否为正常用户（区分搜索引擎）
+            function isNormalUser(){
+                var UA = navigator.userAgent.toLowerCase();
+                var UAs = 'baiduspider,googlebot,youdaobot,360spider,msnbot,bingbot,sosospider,yahoo,sogou web spider,sogou orion spider'.split(',');
+                for(var i=0,total=UAs.length;i<total;i++){
+                    if(UA.indexOf(UAs[i]) > -1){
+                        return false;
+                    }
+                }
+                return true;
+            }
+            if(top == this && isNormalUser()){
+                window.location.href = config.url + '#!' + location.href; 
+            }
+        }());
+    </script>
+	<link rel="stylesheet" href="style/index.css">
+</head>
+<body>
+	<div class="banner">
+        <h1>iframer 简介</h1>
+    </div>
+	<div class="navigation">
+		<a class="spa-link" href="index.html">简介<span>index.html</span></a>
+		<a class="spa-link active" href="doc.html">如何使用<span>doc.html</span></a>
+		<a class="spa-link" href="more.html">进阶功能<span>more.html</span></a>
+		<a class="spa-link" href="help.html">help <span>help.html</span></a>
+	</div>
+	<div class="article">
+        <h1>如何使用</h1>
+		<h3>先说下iframer的工作模式（相信我，这段文字看完你就会懂的）</h3>
+		<p>每个页面真实存在。在页面头部，通过JS判断当前浏览者是否为正常用户（避免google抓取页面的时候执行JS，导致出错），若为正常用户，则将当前URL以锚点（hash）跳转到指定的页面，这里我们称之为【页面A】。</p>
+		<p>在【页面A】里引入<code>iframer.js</code>并初始化，整个过程就轻松的完成啦！（别担心，后面的事我帮你做了）</p>
+		<br/>
+		<h3>步骤一、全站配置</h3>
+		<p>所有需要跳转页面加上下述代码，建议加在所有引用资源之前，以加快响应速度。</p>
+		<p>config.url即【页面A】，你可以自己指定。</p>
+		<pre><code>
+ (function(){
+	var config = {
+		//配置单页所在的路径
+		url : '/app.html'
+	};
+	  //判断是否为正常用户（区分搜索引擎）
+	function isNormalUser(){
+		var UA = navigator.userAgent.toLowerCase();
+		var UAs = 'baiduspider,googlebot,youdaobot,360spider,msnbot,bingbot,sosospider,yahoo,sogou web spider,sogou orion spider'.split(',');
+		for(var i=0,total=UAs.length;i<total;i++){
+			if(UA.indexOf(UAs[i]) > -1){
+				return false;
+			}
+		}
+		return true;
+	}
+	if(top == this && isNormalUser()){
+		window.location.href = config.url + '#!' + location.href; 
+	}
+}());
+		</code></pre>
+		<h3>步骤二、主页面配置（上面提到的【页面A】）</h3>
+<pre><code>
+&lt;style style=&quot;text/css&quot;&gt;
+	body,html{margin: 0;padding 0;height: 100%;}
+    #sap-container{
+		position: relative;
+		width: 100%;
+		height: 100%;
+		background: #aaa;
+    }
+	#sap-container iframe{
+		display: block;
+		width: 100%;
+		height: 100%;
+		border: none;  
+	}
+&lt;/style&gt;
+&lt;div id=&quot;sap-container&quot;&gt;&lt;/div&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;js/iframer.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot;&gt;
+    iframer.init({
+        container : document.getElementById('sap-container'),
+        link_class : 'spa-link',
+        beforeTitleChange : function(title){
+          return 'iframer-' + title
+        }
+    });
+&lt;/script&gt;
+</code></pre>
+
+		
+    </div>
+	<link rel="stylesheet" href="style/xcode.css" />
+	<script type="text/javascript" src="js/highlight.js"></script>
+	<script type="text/javascript">
+		console.log(hljs)
+		hljs.initHighlighting();
+	</script>
+</body>
+</html>

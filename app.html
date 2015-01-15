@@ -1,0 +1,59 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+<style style="text/css">
+	body,html{
+		margin: 0;
+		padding 0;
+		height: 100%;
+	}
+    #sap-container{
+        position: relative;
+		width: 100%;
+		height: 100%;
+		background: #aaa;
+    }
+	#sap-container iframe{
+		display: block;
+		width: 100%;
+		height: 100%;
+		border: none;  
+	}
+    #repo-info{
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 300px;
+        background: #333;
+        color: #fff;
+        text-align: center;
+    }
+    #repo-info h3{
+        font-size: 22px
+    }
+    #repo-info a{
+        font-size: 16px;
+        color: #fff;
+    }
+</style>
+<div id="sap-container"></div>
+<div id="repo-info">
+    <h3>GITHUB</h3>
+    <p><a href="https://github.com/bh-lay/iframer" target="_blank">https://github.com/bh-lay/iframer</a></p>
+</div>
+<script type="text/javascript" src="js/iframer.js"></script>
+<script type="text/javascript">
+    iframer.init({
+        container : document.getElementById('sap-container'),
+        link_class : 'spa-link',
+        beforeTitleChange : function(title){
+          return 'iframer-' + title
+        }
+    });
+</script>
+</body>
+</html>
