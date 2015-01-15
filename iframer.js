@@ -1,21 +1,23 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-15 16:11
+ * @modified 2015-1-15 23:52
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
     window.iframer = window.iframer || iframer_factory(window,document,utils);
 })(window,document,function(window,document,utils){
     
-    var activeIframe,
-        is_inited = false;
+    var private_activeIframe,
+        private_isInited = false,
+        //修改title事件
+        private_beforeTitleChange = null;
     //IFRAMER 主对象
     var IFRAMER = {
         default_url : '/',
         link_class : null,
         init : function (param){
-            if(is_inited){
+            if(private_isInited){
                 console && console.error &&  console.error('iframer should be initialized only once');
             }else{
                 var param = param || {};
@@ -25,29 +27,29 @@
                     console && console.error &&  console.error('arguement "container" must be a dom');
                 }else{
                     this.container = param.container;
-                    this.beforeTitleChange = utils.TypeOf(param.beforeTitleChange) == "function" ? param.beforeTitleChange : null;
                     this.link_class = utils.TypeOf(param.link_class) == 'string' ? param.link_class : 'spa-linkws';
-                    this.default_url = utils.TypeOf(param.default_url) == 'string' ? param.default_url : '/';
+					this.default_url = utils.TypeOf(param.default_url) == 'string' ? hrefToAbsolute(param.default_url,location.pathname) : '/';
 					
-					var hash = (window.location.hash || '#!').replace(/^#!/,'');
-					window.location.hash = '!' + removeDomain(hash);
+					private_beforeTitleChange = utils.TypeOf(param.private_beforeTitleChange) == "function" ? param.private_beforeTitleChange : null;
+					
+					if((window.location.hash || '#!').length <= 2){
+						window.location.hash = '!' + this.default_url;
+					}
                     //监听hashchange事件
                     utils.onhashchange(function(url){
                         url = url || IFRAMER.default_url;
                         createNewPage(url);
                     });
-                    is_inited = true;
+                    private_isInited = true;
                 }
             }
         },
         //承载iframe的dom
         container : null,
-        //修改title事件
-        beforeTitleChange : null,
          //修改主页面title
         updateTitle: function (title){
-            if(this.beforeTitleChange){
-                var newTitle = this.beforeTitleChange(title);
+            if(private_beforeTitleChange){
+                var newTitle = private_beforeTitleChange(title);
                 title = newTitle ? newTitle : title;
             }
             document.title = title;
@@ -66,18 +68,6 @@
         }
     };
 	/**
-	 * 截断域名
-	 *	http://
-	 *	https://
-	 *	//
-	 */
-	function removeDomain(src){
-		if(src.match(/^(\w+\:)*\/\//)){
-			src = src.replace(/^(\w+\:)*\/\/[^\/]*/,'');
-		}
-		return src;
-	}
-	/**
 	 * 转换各类地址至相对站点根目录地址
 	 *	如  'http://xxx.xx/blog/cssSkill.html','https://xxx.xx/blog/cssSkill.html',
 	 *		'//xxx.xx/blog/cssSkill.html'
@@ -85,7 +75,15 @@
 	 *		'blog/cssSkill.html'
 	 **/
 	function hrefToAbsolute(src,base_path){
-		src = removeDomain(src);
+		/**
+		 * 截断域名
+		 *	http://
+		 *	https://
+		 *	//
+		 */
+		if(src.match(/^(\w+\:)*\/\//)){
+			src = src.replace(/^(\w+\:)*\/\/[^\/]*/,'');
+		}
 		//src: /blog/cssSkill.html
 		if(src.charAt(0) == "/"){
 			return src;
@@ -104,7 +102,7 @@
 	}
     //销毁上一个页面
     function destoryOldPage(callback){
-        var oldIframe = activeIframe;
+        var oldIframe = private_activeIframe;
 		if(oldIframe){
 			utils.fadeOut(oldIframe,100,function(){
 				//移除老的iframe
@@ -137,7 +135,7 @@
             }
         });
         //更新当前iframe标记
-		activeIframe = iframe;
+		private_activeIframe = iframe;
 	}
     //绑定iframe事件
     function bindEventsForIframe(iframe,onload){
