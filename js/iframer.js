@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-16 00:16
+ * @modified 2015-1-16 00:33
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -116,6 +116,7 @@
 	function createNewPage(url){
 		var iframe = document.createElement('iframe'); 
 		iframe.src= url;
+		iframe.frameBorder = 0;
         var isLoaded = false,
             isDestoried = false,
             isFadeIn = false;
