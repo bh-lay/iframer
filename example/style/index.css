@@ -1,0 +1,183 @@
+/**
+ * 定义Minxin
+ **/
+body,
+div,
+ul,
+ol,
+li,
+dl,
+dt,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0px;
+  padding: 0px;
+}
+img {
+  border: none;
+}
+ul,
+ol,
+li,
+form,
+dl {
+  list-style: none;
+}
+a {
+  text-decoration: none;
+  color: #333333;
+}
+a:hover {
+  color: #f70;
+}
+TD {
+  color: #777;
+  font-size: 12px;
+  padding: 10px;
+}
+/**
+ * 文章模块
+ */
+.article {
+  padding: 20px;
+  font-size: 14px;
+  font-family: "Microsoft Yahei";
+}
+.article img {
+  display: block;
+  max-width: 100%;
+  margin: auto;
+}
+.article h1,
+.article h2,
+.article h3,
+.article h4,
+.article h5,
+.article h6 {
+  font-weight: normal;
+  margin: 1.8em 0 0;
+}
+.article h1 {
+  font-size: 2em;
+}
+.article h2 {
+  font-size: 1.7em;
+}
+.article h3 {
+  font-size: 1.4em;
+}
+.article h4 {
+  font-size: 1.25em;
+}
+.article h5 {
+  font-size: 1.1em;
+}
+.article h6 {
+  font-size: 1em;
+}
+.article p {
+  line-height: 1.8;
+  margin: 1em 0;
+  font-size: 1em;
+  color: #333333;
+}
+.article ul {
+  margin: 1em 0;
+  padding-left: 1em;
+  list-style-type: disc;
+}
+.article ul li {
+  margin-left: 1em;
+  list-style-type: disc;
+}
+.article ol {
+  margin: 1em 0;
+  padding-left: 1em;
+  list-style-type: decimal;
+}
+.article ol li {
+  margin-left: 1em;
+  list-style-type: decimal;
+}
+.article pre {
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.article code {
+  font-family: inherit;
+  padding: .2em .4em;
+  color: #f70;
+  background-color: #eee;
+  border-radius: 4px;
+}
+.article a {
+  padding: 0px .5em;
+  text-decoration: underline;
+}
+.article a:hover {
+  color: #f70;
+  text-decoration: underline;
+}
+.article *:nth-child(1) {
+  margin-top: 1em !important;
+}
+body {
+  font-family: "Microsoft Yahei";
+  background: #aaa;
+  font-size: 14px;
+}
+.banner {
+  font-size: 2em;
+  padding: 2em;
+  text-align: center;
+  color: #fff;
+  background: #f70;
+}
+.banner h1 {
+  font-size: 1em;
+}
+.navigation {
+  height: 50px;
+  line-height: 50px;
+  text-align: center;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+.navigation a {
+  display: inline-block;
+  position: relative;
+  padding: 0 2em;
+  text-decoration: none;
+  color: #000;
+  font-size: 16px;
+}
+.navigation a.active {
+  background: #eee;
+}
+.navigation a:hover span {
+  top: -30px;
+  opacity: 1;
+}
+.navigation span {
+  position: absolute;
+  left: 0;
+  top: -10px;
+  width: 100%;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: #fff;
+  opacity: 0;
+  transition: all 0.1s ease-out;
+  -moz-transition: all 0.1s ease-out;
+  -webkit-transition: all 0.1s ease-out;
+  -o-transition: all 0.1s ease-out;
+}
