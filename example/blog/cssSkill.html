@@ -2,13 +2,24 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Document</title>
-<script type="text/javascript">
-if(top == window){
-	window.location.href = '/example/app.html#!' + location.href; 
-}
-</script>
-	<link rel="stylesheet" href="/example/style.css">
+	<title>about</title>
+    <script type="text/javascript">
+          //判断是否为正常用户（区分搜索引擎）
+        function isNormalUser(){
+            var UA = navigator.userAgent.toLowerCase();
+            var UAs = 'baiduspider,googlebot,youdaobot,360spider,msnbot,bingbot,sosospider,yahoo,sogou web spider,sogou orion spider'.split(',');
+            for(var i=0,total=UAs.length;i<total;i++){
+                if(UA.indexOf(UAs[i]) > -1){
+                    return false;
+                }
+            }
+            return true;
+        }
+        if(top == this && isNormalUser()){
+            window.location.href = '/example/app.html#!' + location.href; 
+        }
+    </script>
+	<link rel="stylesheet" href="../style.css">
 </head>
 <body>
 	<h1>blog/cssSkill</h1>
