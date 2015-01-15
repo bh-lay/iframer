@@ -1,6 +1,8 @@
-(function(global,doc,utils_factory){
-	var utils = utils_factory(global,doc);
-	var activeIframe;
+(function(window,document,utils_factory){
+	var utils = utils_factory(window,document);
+    
+	var activeIframe,
+        iframe_container = utils.findByClassName(document,'sap-container')[0];
 	/**
 	 * 转换各类地址至相对站点根目录地址
 	 *	如  'http://xxx.xx/blog/cssSkill.html','https://xxx.xx/blog/cssSkill.html',
@@ -44,11 +46,11 @@
 			utils.fadeOut(oldIframe,100,function(){
 				//移除老的iframe
 				utils.removeNode(oldIframe);
-				document.body.appendChild(iframe);
+				iframe_container.appendChild(iframe);
 				utils.fadeIn(iframe,500);
 			});
 		}else{
-			document.body.appendChild(iframe);
+			iframe_container.appendChild(iframe);
 		//	utils.fadeIn(iframe,500);
 		}
 		//绑定iframe load事件
