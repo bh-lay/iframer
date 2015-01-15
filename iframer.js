@@ -1,8 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-15 13:09
- *  location fox
+ * @modified 2015-1-15 16:11
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -28,8 +27,13 @@
                     this.container = param.container;
                     this.beforeTitleChange = utils.TypeOf(param.beforeTitleChange) == "function" ? param.beforeTitleChange : null;
                     this.link_class = utils.TypeOf(param.link_class) == 'string' ? param.link_class : 'spa-linkws';
+                    this.default_url = utils.TypeOf(param.default_url) == 'string' ? param.default_url : '/';
+					
+					var hash = (window.location.hash || '#!').replace(/^#!/,'');
+					window.location.hash = '!' + removeDomain(hash);
                     //监听hashchange事件
                     utils.onhashchange(function(url){
+                        url = url || IFRAMER.default_url;
                         createNewPage(url);
                     });
                     is_inited = true;
@@ -62,6 +66,18 @@
         }
     };
 	/**
+	 * 截断域名
+	 *	http://
+	 *	https://
+	 *	//
+	 */
+	function removeDomain(src){
+		if(src.match(/^(\w+\:)*\/\//)){
+			src = src.replace(/^(\w+\:)*\/\/[^\/]*/,'');
+		}
+		return src;
+	}
+	/**
 	 * 转换各类地址至相对站点根目录地址
 	 *	如  'http://xxx.xx/blog/cssSkill.html','https://xxx.xx/blog/cssSkill.html',
 	 *		'//xxx.xx/blog/cssSkill.html'
@@ -69,15 +85,7 @@
 	 *		'blog/cssSkill.html'
 	 **/
 	function hrefToAbsolute(src,base_path){
-		/**
-		 * 截断域名
-		 *	http://
-		 *	https://
-		 *	//
-		 */
-		if(src.match(/^(\w+\:)*\/\//)){
-			src = src.replace(/^(\w+\:)*\/\/[^\/]*/,'');
-		}
+		src = removeDomain(src);
 		//src: /blog/cssSkill.html
 		if(src.charAt(0) == "/"){
 			return src;
