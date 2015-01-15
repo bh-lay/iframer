@@ -1,0 +1,97 @@
+/**
+ * 定义Minxin
+ **/
+body,
+div,
+ul,
+ol,
+li,
+dl,
+dt,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0px;
+  padding: 0px;
+}
+img {
+  border: none;
+}
+ul,
+ol,
+li,
+form,
+dl {
+  list-style: none;
+}
+a {
+  text-decoration: none;
+  color: #333333;
+}
+a:hover {
+  color: #f70;
+}
+TD {
+  color: #777;
+  font-size: 12px;
+  padding: 10px;
+}
+body,
+html {
+  height: 100%;
+  font-family: "Microsoft Yahei";
+}
+#sap-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #aaa;
+}
+#sap-container iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+#repo-info {
+  position: absolute;
+  width: 280px;
+  right: 20px;
+  bottom: 0;
+  padding: 20px 0 10px;
+  background: #fff;
+  border: 1px solid #aaa;
+  border-bottom: none;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  color: #333;
+  text-align: center;
+  cursor: default;
+  transition: all 0.3s linear;
+  -moz-transition: all 0.3s linear;
+  -webkit-transition: all 0.3s linear;
+  -o-transition: all 0.3s linear;
+}
+#repo-info h3 {
+  margin-bottom: 10px;
+  line-height: 18px;
+  font-size: 18px;
+  font-weight: normal;
+}
+#repo-info a {
+  font-size: 14px;
+  line-height: 18px;
+  color: #333;
+  opacity: 0.8;
+  filter: alpha(opacity=80);
+}
+#repo-info a:hover {
+  text-decoration: underline;
+}
+#repo-info:hover {
+  background: #eee;
+}

@@ -23,6 +23,10 @@ body{
 	text-align: center;
 	background: #fff;
 	box-shadow: 0 0 10px rgba(0,0,0,.5);
+	white-space: nowrap;
+	font-size: 0;
+	overflow-x: auto;
+	overflow-y: visible;
      a{
         display: inline-block;
         position: relative;
@@ -54,9 +58,12 @@ body{
         .transition(.1s,ease-out);
     }
 }
+.container{
+    max-width: 900px;
+	margin: auto;
+	padding: 40px 10px 100px;
+}
 .article{
-    width: 900px;
-    margin: 40px auto;
     padding: 20px;
     background: #fff;
 }
