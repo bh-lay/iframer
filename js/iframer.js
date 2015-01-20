@@ -8,13 +8,68 @@
     window.iframer = window.iframer || iframer_factory(window,document,utils);
 })(window,document,function(window,document,utils){
     var private_activeIframe,
+		//记录组件是否已被初始化
         private_isInited = false,
-		private_localPath,
-		private_domain,
+		//主页面域名（包含协议）
+		private_page_domain,
+		//主页面path
+		private_page_path,
+		//获取url中域名（包含协议）正则
+		private_reg_domain = /^(?:\w+\:)*\/\/[^\/]*/,
+		//由于hash的特殊性，在这里记录是否刷新iframe视图
+		private_needRefresh = true,
         //修改title事件
         private_beforeTitleChange,
 		private_iframeOnload,
 		LOCATION = window.location;
+	var onhashchange = (function(){
+		var hashchange = 'hashchange',
+			documentMode = document.documentMode,
+			supportHashChange = ('on' + hashchange in window) && ( documentMode === void 0 || documentMode > 7 );
+		//获取最新的hash
+		function getHash(hashStr){
+			return (hashStr || LOCATION.hash || '#!').replace(/^#!/,'')
+		}
+		if(supportHashChange){
+			return function(callback){
+				window.onhashchange = function(e){
+					if(!private_needRefresh){
+						private_needRefresh = true;
+						return;
+					}
+					callback && callback(getHash());
+				};
+				callback && callback(getHash());
+			}
+		}else{
+			return function (callback){
+				//记录hash值
+				var private_oldHash = LOCATION.hash;
+				setInterval(function(){
+					var new_hash = LOCATION.hash || '#';
+					//hash发生变化
+					if(new_hash != private_oldHash){
+						private_oldHash = new_hash;
+						if(!private_needRefresh){
+							private_needRefresh = true;
+							return;
+						}
+						callback && callback(getHash(new_hash));
+					}
+				},50);
+				callback && callback(getHash());
+			}
+		}
+	})();
+	//修改hash
+	function changeHash(url,win){
+		win = win || window;
+		url = hrefToAbsolute(url,win.location.pathname);
+		if(url.length < 1){
+			return
+		}
+		window.location.hash = '!' + url;
+	}
     //IFRAMER 主对象
     var IFRAMER = {
         default_url : '/',
@@ -47,35 +102,28 @@
          * 修改页面hash锚点
          *  win为调用者所在的 windows
          */
-        jumpTo : function (url,win){
-            win = win || window;
-            url = hrefToAbsolute(url,win.location.pathname);
-            if(url.length < 1){
-                return
-            }
-            window.location.hash = '!' + url;
-        }
+        jumpTo : changeHash
     };
 	//初始化
 	function INIT(param){
 		this.container = param.container;
-		this.expect_class = utils.TypeOf(param.expect_class) == 'string' ? param.expect_class : 'spa-expect-linkws';
+		this.expect_class = utils.TypeOf(param.expect_class) == 'string' ? param.expect_class : 'spa-expect-links';
 		this.default_url = utils.TypeOf(param.default_url) == 'string' ? hrefToAbsolute(param.default_url,LOCATION.pathname) : '/';
 		
 		private_iframeOnload = utils.TypeOf(param.iframeOnload) == "function" ? param.iframeOnload : null;
-		private_beforeTitleChange = utils.TypeOf(param.private_beforeTitleChange) == "function" ? param.private_beforeTitleChange : null;
-		private_localPath = LOCATION.host;
-		private_domain = LOCATION.domain;
+		private_beforeTitleChange = utils.TypeOf(param.beforeTitleChange) == "function" ? param.beforeTitleChange : null;
+		private_page_path = LOCATION.host;
+		private_page_domain = LOCATION.protocol + '//' + LOCATION.host;
 		
 		var firstHash = (LOCATION.hash || '#!').replace(/^#\!/,'');
 
 		LOCATION.hash = '!' + (firstHash.length ? hrefToAbsolute(firstHash,LOCATION.pathname) : this.default_url);
 		setTimeout(function(){
 			//监听hashchange事件
-			utils.onhashchange(function(url){
+			onhashchange(function(url){
 				url = url || IFRAMER.default_url;
 			//	console.log('loading',url);
-				if(url == private_localPath){
+				if(url == private_page_path){
 					url = IFRAMER.default_url;
 				}
 				createNewPage(url);
@@ -84,6 +132,7 @@
 
 		private_isInited = true;
 	}
+	
 	/**
 	 * 转换各类地址至相对站点根目录地址
 	 *	如  'http://xxx.xx/blog/cssSkill.html','https://xxx.xx/blog/cssSkill.html',
@@ -98,9 +147,8 @@
 		 *	https://
 		 *	//
 		 */
-		if(src.match(/^(\w+\:)*\/\//)){
-			src = src.replace(/^(\w+\:)*\/\/[^\/]*/,'');
-		}
+		src = src.replace(private_reg_domain,'');
+
 		//符合要求，直接返回src: /blog/cssSkill.html
 		if(src.charAt(0) == "/"){
 			return src;
@@ -117,6 +165,7 @@
 		}
 		return base_path + src; 
 	}
+	
 	//创建新的页面
 	function createNewPage(url){
 	//	console.log('createNewPage',url);
@@ -143,11 +192,20 @@
 	}
     //绑定iframe事件
     function bindEventsForIframe(iframe,onload){
+		var isFirst = true;
         utils.bind(iframe,'load',function(){
-            onload && onload();
             //子window对象
-			var iWindow = iframe.contentWindow;
-			private_iframeOnload && private_iframeOnload(iWindow);
+			var iWindow = iframe.contentWindow,
+				iDoc = iframe.contentWindow.document;
+            onload && onload();
+			console.log('load',iWindow.location.href);
+			private_iframeOnload && private_iframeOnload.call(iDoc,iWindow,iDoc);
+			if(isFirst){
+				isFirst = false;
+			}else{
+				private_needRefresh = false;
+				changeHash(iWindow.location.href,iWindow);
+			}
             //更新网页标题
             IFRAMER.updateTitle(iWindow.document.title);
 			//监听iframe内 单页按钮点击事件
@@ -158,18 +216,23 @@
 				}
 			});
 			utils.bind(iWindow.document,'click','a' ,function(evt){
-				var href = this.getAttribute('href') || '';
-					
-				if(href.match(/javascript\s*\:/)){
+				var href = this.getAttribute('href') || '',
+					domain = href.match(private_reg_domain);
+				//链接提供给JS使用，或锚点
+				if(href.match(/^(javascript\s*\:|#)/)){
 					return;
 				}
+				//链接包含配置排除class
 				if(utils.hasClass(this,IFRAMER.expect_class)){
 					return;
 				}
-				
+				//检测域名配置
+				if(domain && domain[0] != private_page_domain){
+					return
+				}
                 IFRAMER.jumpTo(href,iWindow);
 				var evt = evt || iWindow.event; 
-				if (evt.preventDefault) { 
+				if (evt.preventDefault) {
                     evt.preventDefault(); 
 				} else { 
 				    evt.returnValue = false; 
@@ -652,38 +715,6 @@
 				DOM.style.display = 'none';
 				fn && fn.call(DOM);
 			});
-		},
-		onhashchange : (function(){
-			var hashchange = 'hashchange',
-				documentMode = document.documentMode,
-				supportHashChange = ('on' + hashchange in window) && ( documentMode === void 0 || documentMode > 7 ),
-				LOCATION = window.location;
-			//获取最新的hash
-			function getHash(hashStr){
-				return (hashStr || LOCATION.hash || '#!').replace(/^#!/,'')
-			}
-			if(supportHashChange){
-				return function(callback){
-					window.onhashchange = function(e){
-						callback && callback(getHash());
-					};
-					callback && callback(getHash());
-				}
-			}else{
-				return function (callback){
-					//记录hash值
-					var private_oldHash = LOCATION.hash;
-					setInterval(function(){
-						var new_hash = LOCATION.hash || '#';
-						//hash发生变化
-						if(new_hash != private_oldHash){
-							private_oldHash = new_hash;
-							callback && callback(getHash(new_hash));
-						}
-					},50);
-					callback && callback(getHash());
-				}
-			}
-		})()
+		}
 	};
 });

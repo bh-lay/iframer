@@ -36,7 +36,7 @@
 		<a class="spa-link" href="index.html">简介<span>index.html</span></a>
 		<a class="spa-link active" href="doc.html">如何使用<span>doc.html</span></a>
 		<a class="spa-link" href="more.html">进阶功能<span>more.html</span></a>
-		<a class="spa-link" href="help.html">help <span>help.html</span></a>
+		<a class="spa-link" href="help.html">帮助 <span>help.html</span></a>
 	</div>
 	<div class="container"><div class="article">
         <h1>如何使用</h1>
@@ -90,10 +90,17 @@
 &lt;script type=&quot;text/javascript&quot; src=&quot;js/iframer.js&quot;&gt;&lt;/script&gt;
 &lt;script type=&quot;text/javascript&quot;&gt;
     iframer.init({
+       //存放iframe的容器
         container : document.getElementById('sap-container'),
-        link_class : 'spa-link',
-        beforeTitleChange : function(title){
+        //不处理跳转的a链接class
+        expect_class : 'spa-expect-links',
+        //当每次准备更改页面标题时回调
+         beforeTitleChange : function(title){
           return 'iframer-' + title
+        },
+        //iframe 载入事件
+        iframeOnload: function(iframw_window,iframe_document){
+        	//
         }
     });
 &lt;/script&gt;
