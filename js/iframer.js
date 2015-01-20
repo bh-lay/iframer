@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-16 00:33
+ * @modified 2015-1-21 3:36
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
