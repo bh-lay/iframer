@@ -7,15 +7,18 @@
 	var utils = utils_factory(window,document);
     window.iframer = window.iframer || iframer_factory(window,document,utils);
 })(window,document,function(window,document,utils){
-    
     var private_activeIframe,
         private_isInited = false,
+		private_localPath,
+		private_domain,
         //修改title事件
-        private_beforeTitleChange = null;
+        private_beforeTitleChange,
+		private_iframeOnload,
+		LOCATION = window.location;
     //IFRAMER 主对象
     var IFRAMER = {
         default_url : '/',
-        link_class : null,
+        expect_class : null,
         init : function (param){
             if(private_isInited){
                 console && console.error &&  console.error('iframer should be initialized only once');
@@ -26,20 +29,7 @@
                 }else if(!utils.isDOM(param.container)){
                     console && console.error &&  console.error('arguement "container" must be a dom');
                 }else{
-                    this.container = param.container;
-                    this.link_class = utils.TypeOf(param.link_class) == 'string' ? param.link_class : 'spa-linkws';
-					this.default_url = utils.TypeOf(param.default_url) == 'string' ? hrefToAbsolute(param.default_url,location.pathname) : '/';
-					
-					private_beforeTitleChange = utils.TypeOf(param.private_beforeTitleChange) == "function" ? param.private_beforeTitleChange : null;
-					
-					var firstHash = (location.hash || '#!').replace(/^#\!/,'');
-					window.location.hash = '!' + (firstHash.length ? hrefToAbsolute(firstHash,location.pathname) : this.default_url);
-                    //监听hashchange事件
-                    utils.onhashchange(function(url){
-                        url = url || IFRAMER.default_url;
-                        createNewPage(url);
-                    });
-                    private_isInited = true;
+                    INIT.call(this,param);
                 }
             }
         },
@@ -66,6 +56,34 @@
             window.location.hash = '!' + url;
         }
     };
+	//初始化
+	function INIT(param){
+		this.container = param.container;
+		this.expect_class = utils.TypeOf(param.expect_class) == 'string' ? param.expect_class : 'spa-expect-linkws';
+		this.default_url = utils.TypeOf(param.default_url) == 'string' ? hrefToAbsolute(param.default_url,LOCATION.pathname) : '/';
+		
+		private_iframeOnload = utils.TypeOf(param.iframeOnload) == "function" ? param.iframeOnload : null;
+		private_beforeTitleChange = utils.TypeOf(param.private_beforeTitleChange) == "function" ? param.private_beforeTitleChange : null;
+		private_localPath = LOCATION.host;
+		private_domain = LOCATION.domain;
+		
+		var firstHash = (LOCATION.hash || '#!').replace(/^#\!/,'');
+
+		LOCATION.hash = '!' + (firstHash.length ? hrefToAbsolute(firstHash,LOCATION.pathname) : this.default_url);
+		setTimeout(function(){
+			//监听hashchange事件
+			utils.onhashchange(function(url){
+				url = url || IFRAMER.default_url;
+			//	console.log('loading',url);
+				if(url == private_localPath){
+					url = IFRAMER.default_url;
+				}
+				createNewPage(url);
+			});
+		});
+
+		private_isInited = true;
+	}
 	/**
 	 * 转换各类地址至相对站点根目录地址
 	 *	如  'http://xxx.xx/blog/cssSkill.html','https://xxx.xx/blog/cssSkill.html',
@@ -83,7 +101,7 @@
 		if(src.match(/^(\w+\:)*\/\//)){
 			src = src.replace(/^(\w+\:)*\/\/[^\/]*/,'');
 		}
-		//src: /blog/cssSkill.html
+		//符合要求，直接返回src: /blog/cssSkill.html
 		if(src.charAt(0) == "/"){
 			return src;
 		}
@@ -99,40 +117,26 @@
 		}
 		return base_path + src; 
 	}
-    //销毁上一个页面
-    function destoryOldPage(callback){
-        var oldIframe = private_activeIframe;
-		if(oldIframe){
-			utils.fadeOut(oldIframe,100,function(){
-				//移除老的iframe
-				utils.removeNode(oldIframe);
-				callback && callback();
-			});
-		}else{
-			callback && callback()
-		}
-    }
 	//创建新的页面
 	function createNewPage(url){
+	//	console.log('createNewPage',url);
+        var oldIframe = private_activeIframe;
 		var iframe = document.createElement('iframe'); 
 		iframe.src= url;
 		iframe.frameBorder = 0;
-        var isLoaded = false,
-            isDestoried = false,
-            isFadeIn = false;
-        destoryOldPage(function(){
-            IFRAMER.container.appendChild(iframe);
-            isDestoried = true;
-            if(isLoaded && !isFadeIn){
-                utils.fadeIn(iframe,500);
-            }
-        });
+		
+		utils.css(iframe,{
+			position: 'absolute',
+			top: 0,
+			left: 0
+		});
+        IFRAMER.container.appendChild(iframe);
         //监听事件
 		bindEventsForIframe(iframe,function(){
-            isLoaded = true;
-            if(isDestoried && !isFadeIn){
-                utils.fadeIn(iframe,500);
-            }
+			oldIframe && utils.removeNode(oldIframe);
+			utils.css(iframe,{
+				position:'static',
+			});
         });
         //更新当前iframe标记
 		private_activeIframe = iframe;
@@ -143,6 +147,7 @@
             onload && onload();
             //子window对象
 			var iWindow = iframe.contentWindow;
+			private_iframeOnload && private_iframeOnload(iWindow);
             //更新网页标题
             IFRAMER.updateTitle(iWindow.document.title);
 			//监听iframe内 单页按钮点击事件
@@ -152,18 +157,23 @@
 					this.setAttribute('target','_blank');
 				}
 			});
-			utils.bind(iWindow.document,'click','.' + IFRAMER.link_class,function(evt){
-				 //检测是否为预定class
-              //  if(utils.hasClass(this,IFRAMER.link_class)){
-                    var href = this.getAttribute('href');
-                    IFRAMER.jumpTo(href,iWindow);
-				    var evt = evt || iWindow.event; 
-				    if (evt.preventDefault) { 
-                        evt.preventDefault(); 
-				    } else { 
-					   evt.returnValue = false; 
-                    }
-            //    }
+			utils.bind(iWindow.document,'click','a' ,function(evt){
+				var href = this.getAttribute('href') || '';
+					
+				if(href.match(/javascript\s*\:/)){
+					return;
+				}
+				if(utils.hasClass(this,IFRAMER.expect_class)){
+					return;
+				}
+				
+                IFRAMER.jumpTo(href,iWindow);
+				var evt = evt || iWindow.event; 
+				if (evt.preventDefault) { 
+                    evt.preventDefault(); 
+				} else { 
+				    evt.returnValue = false; 
+                }
 			});
 		});
     }
@@ -646,31 +656,32 @@
 		onhashchange : (function(){
 			var hashchange = 'hashchange',
 				documentMode = document.documentMode,
-				supportHashChange = ('on' + hashchange in window) && ( documentMode === void 0 || documentMode > 7 );
+				supportHashChange = ('on' + hashchange in window) && ( documentMode === void 0 || documentMode > 7 ),
+				LOCATION = window.location;
 			//获取最新的hash
 			function getHash(hashStr){
-				return (hashStr || window.location.hash || '#!').replace(/^#!/,'')
+				return (hashStr || LOCATION.hash || '#!').replace(/^#!/,'')
 			}
 			if(supportHashChange){
 				return function(callback){
 					window.onhashchange = function(e){
 						callback && callback(getHash());
-					}
-					callback(getHash());
+					};
+					callback && callback(getHash());
 				}
 			}else{
 				return function (callback){
 					//记录hash值
-					var private_oldHash = window.location.hash;
+					var private_oldHash = LOCATION.hash;
 					setInterval(function(){
-						var new_hash = window.location.hash || '#';
+						var new_hash = LOCATION.hash || '#';
 						//hash发生变化
 						if(new_hash != private_oldHash){
 							private_oldHash = new_hash;
 							callback && callback(getHash(new_hash));
 						}
 					},50);
-					callback(getHash());
+					callback && callback(getHash());
 				}
 			}
 		})()
