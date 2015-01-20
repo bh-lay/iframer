@@ -151,8 +151,6 @@ body {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   white-space: nowrap;
   font-size: 0;
-  overflow-x: auto;
-  overflow-y: visible;
 }
 .navigation a {
   display: inline-block;
