@@ -110,11 +110,13 @@ TD {
   font-size: 13px;
   line-height: 1.8;
 }
+.article pre code {
+  background-color: #eee;
+}
 .article code {
   font-family: inherit;
   padding: .2em .4em;
   color: #f70;
-  background-color: #eee;
   border-radius: 4px;
 }
 .article a {
@@ -124,6 +126,10 @@ TD {
 .article a:hover {
   color: #f70;
   text-decoration: underline;
+}
+.article small {
+  font-size: .8em;
+  opacity: .6;
 }
 .article *:nth-child(1) {
   margin-top: 1em !important;

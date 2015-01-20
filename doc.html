@@ -40,20 +40,18 @@
 	</div>
 	<div class="container"><div class="article">
         <h1>如何使用</h1>
-		<h3>先说下iframer的工作模式（相信我，这段文字看完你就会懂的）</h3>
+		<h3>先说下iframer的工作模式 <small>相信我，这段文字看完你就会懂的</small></h3>
 		<p>每个页面真实存在。在页面头部，通过JS判断当前浏览者是否为正常用户（避免google抓取页面的时候执行JS，导致出错），若为正常用户，则将当前URL以锚点（hash）跳转到指定的页面，这里我们称之为【页面A】。</p>
-		<p>在【页面A】里引入<code>iframer.js</code>并初始化，整个过程就轻松的完成啦！（别担心，后面的事我帮你做了）</p>
+		<p>在【页面A】中<code>iframer.js</code>会根据锚点（hash）显示对应的页面，并且调控链接跳转。</p>
 		<br/>
 		<h3>步骤一、全站配置</h3>
-		<p>所有需要跳转页面加上下述代码，建议加在所有引用资源之前，以加快响应速度。</p>
-		<p>config.url即【页面A】，你可以自己指定。</p>
+		<p>所有需要跳转页面加上下述代码。<small>建议加在所有引用资源之前，以加快响应速度</small></p>
 		<pre><code>
  (function(){
 	var config = {
-		//配置单页所在的路径
-		url : '/app.html'
+		url : '/app.html' //注意：这里配置单页所在的路径
 	};
-	  //判断是否为正常用户（区分搜索引擎）
+	//判断是否为正常用户（区分搜索引擎）
 	function isNormalUser(){
 		var UA = navigator.userAgent.toLowerCase();
 		var UAs = 'baiduspider,googlebot,youdaobot,360spider,msnbot,bingbot,sosospider,yahoo,sogou web spider,sogou orion spider'.split(',');
@@ -70,48 +68,33 @@
 }());
 		</code></pre>
 		<h3>步骤二、主页面配置（上面提到的【页面A】）</h3>
+		<p>【页面A】只需要以下内容即可完成配置。<small>视项目情况修改iframer.js的路径</small></p>
 <pre><code>
-&lt;style style=&quot;text/css&quot;&gt;
-	body,html{margin: 0;padding 0;height: 100%;}
-    #sap-container{
-		position: relative;
-		width: 100%;
-		height: 100%;
-		background: #aaa;
-    }
-	#sap-container iframe{
-		display: block;
-		width: 100%;
-		height: 100%;
-		border: none;  
-	}
-&lt;/style&gt;
-&lt;div id=&quot;sap-container&quot;&gt;&lt;/div&gt;
-&lt;script type=&quot;text/javascript&quot; src=&quot;js/iframer.js&quot;&gt;&lt;/script&gt;
-&lt;script type=&quot;text/javascript&quot;&gt;
-    iframer.init({
-       //存放iframe的容器
-        container : document.getElementById('sap-container'),
-        //不处理跳转的a链接class
-        expect_class : 'spa-expect-links',
-        //当每次准备更改页面标题时回调
-         beforeTitleChange : function(title){
-          return 'iframer-' + title
-        },
-        //iframe 载入事件
-        iframeOnload: function(iframw_window,iframe_document){
-        	//
-        }
-    });
-&lt;/script&gt;
+&lt;!DOCTYPE HTML&gt;
+&lt;html lang="en-US"&gt;
+  &lt;head&gt;
+    &lt;style style=&quot;text/css&quot;&gt;
+      body,html{margin: 0;padding 0;height: 100%;}
+      #sap-container{position: relative;width: 100%;height: 100%;background: #aaa;}
+      #sap-container iframe{display: block;width: 100%;height: 100%;border: none;}
+    &lt;/style&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div id=&quot;sap-container&quot;&gt;&lt;/div&gt;
+    &lt;script type=&quot;text/javascript&quot; src=&quot;js/iframer.js&quot;&gt;&lt;/script&gt;
+    &lt;script type=&quot;text/javascript&quot;&gt;
+      iframer.init({
+         //存放iframe的容器
+         container : document.getElementById('sap-container'),
+      });
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
 </code></pre>
-
-		
     </div></div>
 	<link rel="stylesheet" href="style/xcode.css" />
 	<script type="text/javascript" src="js/highlight.js"></script>
 	<script type="text/javascript">
-		console.log(hljs)
 		hljs.initHighlighting();
 	</script>
 </body>

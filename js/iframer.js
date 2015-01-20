@@ -198,7 +198,6 @@
 			var iWindow = iframe.contentWindow,
 				iDoc = iframe.contentWindow.document;
             onload && onload();
-			console.log('load',iWindow.location.href);
 			private_iframeOnload && private_iframeOnload.call(iDoc,iWindow,iDoc);
 			if(isFirst){
 				isFirst = false;
@@ -226,11 +225,12 @@
 				if(utils.hasClass(this,IFRAMER.expect_class)){
 					return;
 				}
-				//检测域名配置
+				//不同域名
 				if(domain && domain[0] != private_page_domain){
 					return
 				}
                 IFRAMER.jumpTo(href,iWindow);
+				//阻止浏览器默认事件
 				var evt = evt || iWindow.event; 
 				if (evt.preventDefault) {
                     evt.preventDefault(); 

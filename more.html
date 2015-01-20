@@ -45,8 +45,44 @@
 <p>发挥你的想象，把音乐播放器做在主页面里，岂不是可以随意切换页面而不用担心音乐中断（iframe操作父窗口很简单的）。</p>
 <p>还有就是IM聊天功能。</p>
 <p>是不是想想就很棒呢！</p>
+<hr>
 <br/>
-<p>当然iframer也提供了更多接口，后续补上详细API，欢迎一起开发这个项目。</p>
+<h3>iframer.js初始化接收的全部参数</h3>
+<pre><code>
+iframer.init({
+    //存放iframe的容器
+    container : document.getElementById('sap-container'),
+    //默认页面
+    default_url:'index.html',
+    //不处理跳转的a链接class
+    expect_class : 'spa-expect-links',
+    //当每次准备更改页面标题时回调
+    beforeTitleChange : function(title){
+      return 'iframer-' + title
+    },
+    //iframe 载入事件
+    iframeOnload: function(iframw_window,iframe_document){
+       //
+    }
+});
+</code></pre>
+<h3>主动跳转至某一页面</h3>
+<pre><code>
+//跳转到某个页面
+iframer.jumpTo('/article/id/342');
+//若在iframe中执行,请带上window参数（用于计算相对路径）
+top.iframer.jumpTo('area/tags',window);
+</code></pre>
+<h3>修改页面标题</h3>
+<p>修改时会触发<code>beforeTitleChange</code>事件，执行相应修改。</p>
+<pre><code>
+iframer.updateTitle('欢迎光临');
+</code></pre>
 		</div></div>
+	<link rel="stylesheet" href="style/xcode.css" />
+	<script type="text/javascript" src="js/highlight.js"></script>
+	<script type="text/javascript">
+		hljs.initHighlighting();
+	</script>
 </body>
 </html>
