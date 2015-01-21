@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-21 3:36
+ * @modified 2015-1-22 00:10
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -68,7 +68,7 @@
 		if(url.length < 1){
 			return
 		}
-		window.location.hash = '!' + url;
+		LOCATION.hash = '!' + url;
 	}
     //IFRAMER 主对象
     var IFRAMER = {
@@ -112,7 +112,7 @@
 		
 		private_iframeOnload = utils.TypeOf(param.iframeOnload) == "function" ? param.iframeOnload : null;
 		private_beforeTitleChange = utils.TypeOf(param.beforeTitleChange) == "function" ? param.beforeTitleChange : null;
-		private_page_path = LOCATION.host;
+		private_page_path = LOCATION.pathname;
 		private_page_domain = LOCATION.protocol + '//' + LOCATION.host;
 		
 		var firstHash = (LOCATION.hash || '#!').replace(/^#\!/,'');
@@ -125,8 +125,10 @@
 			//	console.log('loading',url);
 				if(url == private_page_path){
 					url = IFRAMER.default_url;
+					changeHash(url);
+				}else{
+					createNewPage(url);
 				}
-				createNewPage(url);
 			});
 		});
 
@@ -165,28 +167,32 @@
 		}
 		return base_path + src; 
 	}
-	
 	//创建新的页面
 	function createNewPage(url){
 	//	console.log('createNewPage',url);
         var oldIframe = private_activeIframe;
 		var iframe = document.createElement('iframe'); 
+		var elem_loading = utils.createDom('<div style=position:absolute;top:0;left:0;width:100%;height:100%;opacity:.5></div>')[0];
 		iframe.src= url;
 		iframe.frameBorder = 0;
 		
-		utils.css(iframe,{
-			position: 'absolute',
-			top: 0,
-			left: 0
-		});
         IFRAMER.container.appendChild(iframe);
+        IFRAMER.container.appendChild(elem_loading);
+		if(oldIframe){
+			utils.css(iframe,{
+				height: 0
+			});
+		}
         //监听事件
-		bindEventsForIframe(iframe,function(){
+		bindEventsForIframe(iframe);
+		
+		setTimeout(function(){
+			utils.removeNode(elem_loading);
 			oldIframe && utils.removeNode(oldIframe);
 			utils.css(iframe,{
-				position:'static',
+				height: ''
 			});
-        });
+		},300);
         //更新当前iframe标记
 		private_activeIframe = iframe;
 	}
@@ -197,6 +203,10 @@
 	function hrefExpectForSPA(href){
 		var domain = href.match(private_reg_domain),
 			returns = false;
+		//无路径，不处理
+		if(href.length ==0){
+			returns = true;
+		}
 		//链接提供给JS使用，或锚点
 		if(href.match(/^(javascript\s*\:|#)/)){
 			returns = true;
@@ -212,23 +222,23 @@
 		return returns;
 	}
     //绑定iframe事件
-    function bindEventsForIframe(iframe,onload){
-		var isFirst = true;
+    function bindEventsForIframe(iframe){
         utils.bind(iframe,'load',function(){
             //子window对象
 			var iWindow = iframe.contentWindow,
 				iDoc = iframe.contentWindow.document;
-            onload && onload();
 			private_iframeOnload && private_iframeOnload.call(iDoc,iWindow,iDoc);
-			if(isFirst){
-				isFirst = false;
-			}else{
+			
+			console.log(iWindow.location.pathname,iframe.getAttribute('src'))
+			//应对服务器可能重定向，静默更改地址
+			if(iWindow.location.pathname != iframe.getAttribute('src')){
 				private_needRefresh = false;
 				changeHash(iWindow.location.href,iWindow);
 			}
+		
             //更新网页标题
             IFRAMER.updateTitle(iWindow.document.title);
-			//监听iframe内 单页按钮点击事件
+			//处理非单页链接跳转问题
 			utils.bind(iWindow.document,'mousedown','a',function(evt){
 				var href = this.getAttribute('href') || '',
 					target = this.getAttribute('target');
@@ -236,6 +246,7 @@
 					this.setAttribute('target','_blank');
 				}
 			});
+			//监听iframe内 单页按钮点击事件
 			utils.bind(iWindow.document,'click','a' ,function(evt){
 				var href = this.getAttribute('href') || '';
 				if(hrefExpectForSPA(href)){
