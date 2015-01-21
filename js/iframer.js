@@ -229,7 +229,6 @@
 				iDoc = iframe.contentWindow.document;
 			private_iframeOnload && private_iframeOnload.call(iDoc,iWindow,iDoc);
 			
-			console.log(iWindow.location.pathname,iframe.getAttribute('src'))
 			//应对服务器可能重定向，静默更改地址
 			if(iWindow.location.pathname != iframe.getAttribute('src')){
 				private_needRefresh = false;
