@@ -190,6 +190,27 @@
         //更新当前iframe标记
 		private_activeIframe = iframe;
 	}
+	/**
+	 * 检测链接是否应该被排除不处理
+	 *
+	 **/
+	function hrefExpectForSPA(href){
+		var domain = href.match(private_reg_domain),
+			returns = false;
+		//链接提供给JS使用，或锚点
+		if(href.match(/^(javascript\s*\:|#)/)){
+			returns = true;
+		}
+		//链接包含配置排除class
+		if(utils.hasClass(this,IFRAMER.expect_class)){
+			returns = true;
+		}
+		//不同域名
+		if(domain && domain[0] != private_page_domain){
+			returns = true;
+		}
+		return returns;
+	}
     //绑定iframe事件
     function bindEventsForIframe(iframe,onload){
 		var isFirst = true;
@@ -209,25 +230,16 @@
             IFRAMER.updateTitle(iWindow.document.title);
 			//监听iframe内 单页按钮点击事件
 			utils.bind(iWindow.document,'mousedown','a',function(evt){
-				var target = this.getAttribute('target');
-				if(!target){
+				var href = this.getAttribute('href') || '',
+					target = this.getAttribute('target');
+				if(!target && !hrefExpectForSPA(href)){
 					this.setAttribute('target','_blank');
 				}
 			});
 			utils.bind(iWindow.document,'click','a' ,function(evt){
-				var href = this.getAttribute('href') || '',
-					domain = href.match(private_reg_domain);
-				//链接提供给JS使用，或锚点
-				if(href.match(/^(javascript\s*\:|#)/)){
+				var href = this.getAttribute('href') || '';
+				if(hrefExpectForSPA(href)){
 					return;
-				}
-				//链接包含配置排除class
-				if(utils.hasClass(this,IFRAMER.expect_class)){
-					return;
-				}
-				//不同域名
-				if(domain && domain[0] != private_page_domain){
-					return
 				}
                 IFRAMER.jumpTo(href,iWindow);
 				//阻止浏览器默认事件
