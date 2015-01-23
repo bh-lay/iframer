@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-22 00:10
+ * @modified 2015-1-23 20:33
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -197,22 +197,17 @@
 		private_activeIframe = iframe;
 	}
 	/**
-	 * 检测链接是否应该被排除不处理
-	 *
+	 * 检测链接是否应该忽略
 	 **/
-	function hrefExpectForSPA(href){
+	function hrefIgnoreForSPA(href){
 		var domain = href.match(private_reg_domain),
 			returns = false;
 		//无路径，不处理
-		if(href.length ==0){
+		if(href.length == 0){
 			returns = true;
 		}
 		//链接提供给JS使用，或锚点
 		if(href.match(/^(javascript\s*\:|#)/)){
-			returns = true;
-		}
-		//链接包含配置排除class
-		if(utils.hasClass(this,IFRAMER.expect_class)){
 			returns = true;
 		}
 		//不同域名
@@ -220,6 +215,14 @@
 			returns = true;
 		}
 		return returns;
+	}
+	/**
+	 * 链接包含配置排除class
+	 **/
+	function linkExpect(link){
+		if(utils.hasClass(link,IFRAMER.expect_class)){
+			return true;
+		}
 	}
     //绑定iframe事件
     function bindEventsForIframe(iframe){
@@ -241,16 +244,18 @@
 			utils.bind(iWindow.document,'mousedown','a',function(evt){
 				var href = this.getAttribute('href') || '',
 					target = this.getAttribute('target');
-				if(!target && !hrefExpectForSPA(href)){
+				//定义排除class，加上_blank,没有taget并且href不应该被忽略
+				if(linkExpect(this) || (!target && !hrefIgnoreForSPA(href))){
 					this.setAttribute('target','_blank');
 				}
 			});
 			//监听iframe内 单页按钮点击事件
 			utils.bind(iWindow.document,'click','a' ,function(evt){
 				var href = this.getAttribute('href') || '';
-				if(hrefExpectForSPA(href)){
+				if(hrefIgnoreForSPA(href) || linkExpect(this)){
 					return;
 				}
+				
                 IFRAMER.jumpTo(href,iWindow);
 				//阻止浏览器默认事件
 				var evt = evt || iWindow.event; 
