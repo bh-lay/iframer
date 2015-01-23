@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-23 20:33
+ * @modified 2015-1-23 23:03
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -22,21 +22,17 @@
         private_beforeTitleChange,
 		private_iframeOnload,
 		LOCATION = window.location;
+	//获取最新的hash
+	function getHash(hashStr){
+		return (hashStr || LOCATION.hash || '#!').replace(/^#!/,'')
+	}
 	var onhashchange = (function(){
 		var hashchange = 'hashchange',
 			documentMode = document.documentMode,
 			supportHashChange = ('on' + hashchange in window) && ( documentMode === void 0 || documentMode > 7 );
-		//获取最新的hash
-		function getHash(hashStr){
-			return (hashStr || LOCATION.hash || '#!').replace(/^#!/,'')
-		}
 		if(supportHashChange){
 			return function(callback){
 				window.onhashchange = function(e){
-					if(!private_needRefresh){
-						private_needRefresh = true;
-						return;
-					}
 					callback && callback(getHash());
 				};
 				callback && callback(getHash());
@@ -50,10 +46,6 @@
 					//hash发生变化
 					if(new_hash != private_oldHash){
 						private_oldHash = new_hash;
-						if(!private_needRefresh){
-							private_needRefresh = true;
-							return;
-						}
 						callback && callback(getHash(new_hash));
 					}
 				},50);
@@ -68,9 +60,7 @@
 		if(url.length < 1){
 			return
 		}
-		console.log('changeHash',url);
-		console.log('  --');
-		LOCATION.hash = '!' + url;
+		LOCATION.hash = '!' + decodeURIComponent(url);
 	}
     //IFRAMER 主对象
     var IFRAMER = {
@@ -123,8 +113,11 @@
 		setTimeout(function(){
 			//监听hashchange事件
 			onhashchange(function(url){
+				if(!private_needRefresh){
+					private_needRefresh = true;
+					return;
+				}
 				url = url || IFRAMER.default_url;
-			//	console.log('loading',url);
 				if(url == private_basePage_path){
 					url = IFRAMER.default_url;
 					changeHash(url);
@@ -171,7 +164,6 @@
 	}
 	//创建新的页面
 	function createNewPage(url){
-	//	console.log('createNewPage',url);
         var oldIframe = private_activeIframe;
 		var iframe = document.createElement('iframe'); 
 		var elem_loading = utils.createDom('<div style=position:absolute;top:0;left:0;width:100%;height:100%;opacity:.5></div>')[0];
@@ -186,15 +178,14 @@
 			});
 		}
         //监听事件
-		bindEventsForIframe(iframe);
-		
-		setTimeout(function(){
+		bindEventsForIframe(iframe,function(){
 			utils.removeNode(elem_loading);
 			oldIframe && utils.removeNode(oldIframe);
 			utils.css(iframe,{
 				height: ''
-			});
-		},300);
+			});			
+		});
+		
         //更新当前iframe标记
 		private_activeIframe = iframe;
 	}
@@ -227,20 +218,23 @@
 		}
 	}
     //绑定iframe事件
-    function bindEventsForIframe(iframe){
+    function bindEventsForIframe(iframe,onLoad){
         utils.bind(iframe,'load',function(){
             //子window对象
 			var iWindow = iframe.contentWindow,
 				iDoc = iframe.contentWindow.document;
+			onLoad && onLoad();
 			private_iframeOnload && private_iframeOnload.call(iDoc,iWindow,iDoc);
 			
-			//应对服务器可能重定向
+			//应对服务器可能重定向,或内部跳转
 			if(iWindow.location.pathname != iframe.getAttribute('src')){
 				//若重定向到了最外层地址
 				if(iWindow.location.pathname == private_basePage_path){
 					//跳转至默认页
 					changeHash(IFRAMER.default_url);
-				}else{
+					
+					//FIXME 感觉有点儿二
+				}else if(iWindow.location.pathname == getHash()){
 					//静默修改地址
 					private_needRefresh = false;
 					changeHash(iWindow.location.href,iWindow);
@@ -256,6 +250,10 @@
 				//定义排除class，加上_blank,没有taget并且href不应该被忽略
 				if(linkExpect(this) || (!target && !hrefIgnoreForSPA(href))){
 					this.setAttribute('target','_blank');
+				}
+				//若链接指向了最外层地址，更改为默认地址
+				if(href == private_basePage_path){
+					this.setAttribute('href',IFRAMER.default_url);
 				}
 			});
 			//监听iframe内 单页按钮点击事件
