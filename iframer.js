@@ -12,8 +12,8 @@
         private_isInited = false,
 		//主页面域名（包含协议）
 		private_page_domain,
-		//主页面path
-		private_page_path,
+		//单页主页面路径
+		private_basePage_path,
 		//获取url中域名（包含协议）正则
 		private_reg_domain = /^(?:\w+\:)*\/\/[^\/]*/,
 		//由于hash的特殊性，在这里记录是否刷新iframe视图
@@ -68,6 +68,8 @@
 		if(url.length < 1){
 			return
 		}
+		console.log('changeHash',url);
+		console.log('  --');
 		LOCATION.hash = '!' + url;
 	}
     //IFRAMER 主对象
@@ -112,7 +114,7 @@
 		
 		private_iframeOnload = utils.TypeOf(param.iframeOnload) == "function" ? param.iframeOnload : null;
 		private_beforeTitleChange = utils.TypeOf(param.beforeTitleChange) == "function" ? param.beforeTitleChange : null;
-		private_page_path = LOCATION.pathname;
+		private_basePage_path = LOCATION.pathname;
 		private_page_domain = LOCATION.protocol + '//' + LOCATION.host;
 		
 		var firstHash = (LOCATION.hash || '#!').replace(/^#\!/,'');
@@ -123,7 +125,7 @@
 			onhashchange(function(url){
 				url = url || IFRAMER.default_url;
 			//	console.log('loading',url);
-				if(url == private_page_path){
+				if(url == private_basePage_path){
 					url = IFRAMER.default_url;
 					changeHash(url);
 				}else{
@@ -232,10 +234,17 @@
 				iDoc = iframe.contentWindow.document;
 			private_iframeOnload && private_iframeOnload.call(iDoc,iWindow,iDoc);
 			
-			//应对服务器可能重定向，静默更改地址
+			//应对服务器可能重定向
 			if(iWindow.location.pathname != iframe.getAttribute('src')){
-				private_needRefresh = false;
-				changeHash(iWindow.location.href,iWindow);
+				//若重定向到了最外层地址
+				if(iWindow.location.pathname == private_basePage_path){
+					//跳转至默认页
+					changeHash(IFRAMER.default_url);
+				}else{
+					//静默修改地址
+					private_needRefresh = false;
+					changeHash(iWindow.location.href,iWindow);
+				}
 			}
 		
             //更新网页标题
