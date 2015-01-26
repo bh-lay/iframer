@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-22 00:10
+ * @modified 2015-1-23 23:03
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -12,8 +12,8 @@
         private_isInited = false,
 		//主页面域名（包含协议）
 		private_page_domain,
-		//主页面path
-		private_page_path,
+		//单页主页面路径
+		private_basePage_path,
 		//获取url中域名（包含协议）正则
 		private_reg_domain = /^(?:\w+\:)*\/\/[^\/]*/,
 		//由于hash的特殊性，在这里记录是否刷新iframe视图
@@ -22,21 +22,17 @@
         private_beforeTitleChange,
 		private_iframeOnload,
 		LOCATION = window.location;
+	//获取最新的hash
+	function getHash(hashStr){
+		return (hashStr || LOCATION.hash || '#!').replace(/^#!/,'')
+	}
 	var onhashchange = (function(){
 		var hashchange = 'hashchange',
 			documentMode = document.documentMode,
 			supportHashChange = ('on' + hashchange in window) && ( documentMode === void 0 || documentMode > 7 );
-		//获取最新的hash
-		function getHash(hashStr){
-			return (hashStr || LOCATION.hash || '#!').replace(/^#!/,'')
-		}
 		if(supportHashChange){
 			return function(callback){
 				window.onhashchange = function(e){
-					if(!private_needRefresh){
-						private_needRefresh = true;
-						return;
-					}
 					callback && callback(getHash());
 				};
 				callback && callback(getHash());
@@ -50,10 +46,6 @@
 					//hash发生变化
 					if(new_hash != private_oldHash){
 						private_oldHash = new_hash;
-						if(!private_needRefresh){
-							private_needRefresh = true;
-							return;
-						}
 						callback && callback(getHash(new_hash));
 					}
 				},50);
@@ -68,7 +60,7 @@
 		if(url.length < 1){
 			return
 		}
-		LOCATION.hash = '!' + url;
+		LOCATION.hash = '!' + decodeURIComponent(url);
 	}
     //IFRAMER 主对象
     var IFRAMER = {
@@ -112,7 +104,7 @@
 		
 		private_iframeOnload = utils.TypeOf(param.iframeOnload) == "function" ? param.iframeOnload : null;
 		private_beforeTitleChange = utils.TypeOf(param.beforeTitleChange) == "function" ? param.beforeTitleChange : null;
-		private_page_path = LOCATION.pathname;
+		private_basePage_path = LOCATION.pathname;
 		private_page_domain = LOCATION.protocol + '//' + LOCATION.host;
 		
 		var firstHash = (LOCATION.hash || '#!').replace(/^#\!/,'');
@@ -121,9 +113,12 @@
 		setTimeout(function(){
 			//监听hashchange事件
 			onhashchange(function(url){
+				if(!private_needRefresh){
+					private_needRefresh = true;
+					return;
+				}
 				url = url || IFRAMER.default_url;
-			//	console.log('loading',url);
-				if(url == private_page_path){
+				if(url == private_basePage_path){
 					url = IFRAMER.default_url;
 					changeHash(url);
 				}else{
@@ -169,7 +164,6 @@
 	}
 	//创建新的页面
 	function createNewPage(url){
-	//	console.log('createNewPage',url);
         var oldIframe = private_activeIframe;
 		var iframe = document.createElement('iframe'); 
 		var elem_loading = utils.createDom('<div style=position:absolute;top:0;left:0;width:100%;height:100%;opacity:.5></div>')[0];
@@ -184,35 +178,29 @@
 			});
 		}
         //监听事件
-		bindEventsForIframe(iframe);
-		
-		setTimeout(function(){
+		bindEventsForIframe(iframe,function(){
 			utils.removeNode(elem_loading);
 			oldIframe && utils.removeNode(oldIframe);
 			utils.css(iframe,{
 				height: ''
-			});
-		},300);
+			});			
+		});
+		
         //更新当前iframe标记
 		private_activeIframe = iframe;
 	}
 	/**
-	 * 检测链接是否应该被排除不处理
-	 *
+	 * 检测链接是否应该忽略
 	 **/
-	function hrefExpectForSPA(href){
+	function hrefIgnoreForSPA(href){
 		var domain = href.match(private_reg_domain),
 			returns = false;
 		//无路径，不处理
-		if(href.length ==0){
+		if(href.length == 0){
 			returns = true;
 		}
 		//链接提供给JS使用，或锚点
 		if(href.match(/^(javascript\s*\:|#)/)){
-			returns = true;
-		}
-		//链接包含配置排除class
-		if(utils.hasClass(this,IFRAMER.expect_class)){
 			returns = true;
 		}
 		//不同域名
@@ -221,18 +209,36 @@
 		}
 		return returns;
 	}
+	/**
+	 * 链接包含配置排除class
+	 **/
+	function linkExpect(link){
+		if(utils.hasClass(link,IFRAMER.expect_class)){
+			return true;
+		}
+	}
     //绑定iframe事件
-    function bindEventsForIframe(iframe){
+    function bindEventsForIframe(iframe,onLoad){
         utils.bind(iframe,'load',function(){
             //子window对象
 			var iWindow = iframe.contentWindow,
 				iDoc = iframe.contentWindow.document;
+			onLoad && onLoad();
 			private_iframeOnload && private_iframeOnload.call(iDoc,iWindow,iDoc);
 			
-			//应对服务器可能重定向，静默更改地址
+			//应对服务器可能重定向,或内部跳转
 			if(iWindow.location.pathname != iframe.getAttribute('src')){
-				private_needRefresh = false;
-				changeHash(iWindow.location.href,iWindow);
+				//若重定向到了最外层地址
+				if(iWindow.location.pathname == private_basePage_path){
+					//跳转至默认页
+					changeHash(IFRAMER.default_url);
+					
+					//FIXME 感觉有点儿二
+				}else if(iWindow.location.pathname == getHash()){
+					//静默修改地址
+					private_needRefresh = false;
+					changeHash(iWindow.location.href,iWindow);
+				}
 			}
 		
             //更新网页标题
@@ -241,16 +247,22 @@
 			utils.bind(iWindow.document,'mousedown','a',function(evt){
 				var href = this.getAttribute('href') || '',
 					target = this.getAttribute('target');
-				if(!target && !hrefExpectForSPA(href)){
+				//定义排除class，加上_blank,没有taget并且href不应该被忽略
+				if(linkExpect(this) || (!target && !hrefIgnoreForSPA(href))){
 					this.setAttribute('target','_blank');
+				}
+				//若链接指向了最外层地址，更改为默认地址
+				if(href == private_basePage_path){
+					this.setAttribute('href',IFRAMER.default_url);
 				}
 			});
 			//监听iframe内 单页按钮点击事件
 			utils.bind(iWindow.document,'click','a' ,function(evt){
 				var href = this.getAttribute('href') || '';
-				if(hrefExpectForSPA(href)){
+				if(hrefIgnoreForSPA(href) || linkExpect(this)){
 					return;
 				}
+				
                 IFRAMER.jumpTo(href,iWindow);
 				//阻止浏览器默认事件
 				var evt = evt || iWindow.event; 
