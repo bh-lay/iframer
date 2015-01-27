@@ -227,14 +227,12 @@
 			private_iframeOnload && private_iframeOnload.call(iDoc,iWindow,iDoc);
 			
 			//应对服务器可能重定向,或内部跳转
-			if(iWindow.location.pathname != iframe.getAttribute('src')){
+			if(iWindow.location.pathname != getHash()){
 				//若重定向到了最外层地址
 				if(iWindow.location.pathname == private_basePage_path){
 					//跳转至默认页
 					changeHash(IFRAMER.default_url);
-					
-					//FIXME 感觉有点儿二
-				}else if(iWindow.location.pathname == getHash()){
+				}else{
 					//静默修改地址
 					private_needRefresh = false;
 					changeHash(iWindow.location.href,iWindow);
