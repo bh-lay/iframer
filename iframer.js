@@ -15,7 +15,7 @@
 		//单页主页面路径
 		private_basePage_path,
 		//获取url中域名（包含协议）正则
-		private_reg_domain = /^(?:\w+\:)*\/\/[^\/]*/,
+		private_reg_domain = /^(?:http(?:|s)\:)*\/\/[^\/]+/,
 		//由于hash的特殊性，在这里记录是否刷新iframe视图
 		private_needRefresh = true,
         //修改title事件
