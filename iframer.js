@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-30 13:40
+ * @modified 2015-1-30 14:09
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -192,8 +192,9 @@
 		}
 		//监听iframe load事件
         utils.bind(iframe,'load',function(){
+            //移除老的iframe、动画层
 			oldIframe && utils.removeNode(oldIframe);
-			utils.removeNode(elem_loading);
+			elem_loading && utils.removeNode(elem_loading);
 			utils.css(iframe,{
 				height: ''
 			});
@@ -507,10 +508,10 @@
 		clone : clone,
 		unbind : removeHandler,
 		hasClass : hasClass,
-		'addClass' : function (dom, cls) {
+		addClass : function (dom, cls) {
 			if (!this.hasClass(dom, cls)) dom.className += " " + cls;
 		},
-		'removeClass' : function (dom, cls) {
+		removeClass : function (dom, cls) {
 			if (hasClass(dom, cls)) {
 				var reg = new RegExp('(\\s|^)' + cls + '(\\s|$)');
 				dom.className = dom.className.replace(reg, ' ');
