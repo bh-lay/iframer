@@ -463,19 +463,6 @@
 		}
 	})();
 	
-	function checkEventForClass(event,classStr,dom){
-		var target = event.srcElement || event.target;
-		while (1) {
-			if(target == dom || !target){
-				return false;
-			}
-			if(hasClass(target,classStr)){
-				return target;
-			}
-			
-			target = target.parentNode;
-		}
-	}
 	function checkEventForTagname(event,tagName,dom){
 		var target = event.srcElement || event.target;
 		while (1) {
@@ -493,23 +480,14 @@
 		var className,tagName,fn;
 		if(typeof(a) == 'string'){
 			fn = b;
-			if(a.charAt(0) == '.'){
-				className = a.replace(/^\./,'');
-				callback = function(e){
-					var bingoDom = checkEventForClass(e,className,elem);
-					if(bingoDom){
-						fn && fn.call(bingoDom,e);
-					}
-				};
-			}else{
-				tagName = a;
-				callback = function(e){
-					var bingoDom = checkEventForTagname(e,tagName,elem);
-					if(bingoDom){
-						fn && fn.call(bingoDom,e);
-					}
-				};
-			}
+
+            tagName = a;
+            callback = function(e){
+                var bingoDom = checkEventForTagname(e,tagName,elem);
+                if(bingoDom){
+                    fn && fn.call(bingoDom,e);
+                }
+            };
 		}else{
 			callback = a;
 		}
