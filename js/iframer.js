@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-30 13:40
+ * @modified 2015-1-30 14:09
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -14,7 +14,7 @@
 		private_page_domain,
 		//单页主页面路径
 		private_basePage_path,
-		//获取url中域名（包含协议）正则
+		//获取url中域名（包含协议）正则 'http://xxx.xx/xxx','https://xxx.xx/xxx','//xxx.xx/xxx'
 		private_reg_domain = /^(?:http(?:|s)\:)*\/\/[^\/]+/,
 		//由于hash的特殊性，在这里记录是否刷新iframe视图
 		private_needRefresh = true,
@@ -22,14 +22,68 @@
         private_beforeTitleChange,
 		private_iframeOnload,
 		LOCATION = window.location;
+    
 	//获取最新的hash
 	function getHash(hashStr){
 		return (hashStr || LOCATION.hash || '#!').replace(/^#!/,'')
 	}
+	//修改hash
+	function changeHash(url,win){
+		win = win || window;
+		url = hrefToAbsolute(url,win.location.pathname);
+		if(url.length < 1){
+			return
+		}
+		LOCATION.hash = '!' + decodeURIComponent(url);
+	}
+	/**
+	 * 转换各类地址至相对站点根目录地址
+	 *	如  '../../blog/cssSkill.html','blog/cssSkill.html'
+     *  至  '/xxx/xxx'
+	 **/
+	function hrefToAbsolute(src,base_path){
+		// 截断域名
+		src = src.replace(private_reg_domain,'');
+
+		//符合要求，直接返回src: /blog/cssSkill.html
+		if(src.charAt(0) == "/"){
+			return src;
+		}
+		
+		base_path = /^[^?#]*\//.exec(base_path)[0];
+		//处理 '../'
+		if(src.match(/^\.\.\//)){
+			src = src.replace(/\.\.\//g,function(){
+				//每匹配到一个“../”，base_path向前退一位
+				base_path = base_path.replace(/\/[^\/]*\/$/,'/');
+				return '';
+			});
+		}
+		return base_path + src; 
+	}
+     //是否为不同域名
+    function isHrefOutDomain(href){
+        var domain = (href || '').match(private_reg_domain);
+		return (domain && domain[0] != private_page_domain) ? true : false;
+    }
+	/**
+	 * 检测链接是为提供给js使用的地址
+     *   无地址、 javascript:: 、javascript:void(0)、#
+	 **/
+	function hrefForScript(href){
+		return (href.length == 0 || href.match(/^(javascript\s*\:|#)/)) ? true : false;
+	}
+	/**
+	 * 链接包含配置排除class
+	 **/
+	function linkExpectForSpa(link){
+		if(utils.hasClass(link,IFRAMER.expect_class)){
+			return true;
+		}
+	}
 	var onhashchange = (function(){
-		var hashchange = 'hashchange',
-			documentMode = document.documentMode,
-			supportHashChange = ('on' + hashchange in window) && ( documentMode === void 0 || documentMode > 7 );
+		var documentMode = document.documentMode,
+			supportHashChange = ('onhashchange' in window) && ( documentMode === void 0 || documentMode > 7 );
 		if(supportHashChange){
 			return function(callback){
 				window.onhashchange = function(e){
@@ -53,15 +107,6 @@
 			}
 		}
 	})();
-	//修改hash
-	function changeHash(url,win){
-		win = win || window;
-		url = hrefToAbsolute(url,win.location.pathname);
-		if(url.length < 1){
-			return
-		}
-		LOCATION.hash = '!' + decodeURIComponent(url);
-	}
     //IFRAMER 主对象
     var IFRAMER = {
         default_url : '/',
@@ -130,38 +175,6 @@
 		private_isInited = true;
 	}
 	
-	/**
-	 * 转换各类地址至相对站点根目录地址
-	 *	如  'http://xxx.xx/blog/cssSkill.html','https://xxx.xx/blog/cssSkill.html',
-	 *		'//xxx.xx/blog/cssSkill.html'
-	 *		'../../blog/cssSkill.html',
-	 *		'blog/cssSkill.html'
-	 **/
-	function hrefToAbsolute(src,base_path){
-		/**
-		 * 截断域名
-		 *	http://
-		 *	https://
-		 *	//
-		 */
-		src = src.replace(private_reg_domain,'');
-
-		//符合要求，直接返回src: /blog/cssSkill.html
-		if(src.charAt(0) == "/"){
-			return src;
-		}
-		
-		base_path = /^[^?#]*\//.exec(base_path)[0];
-		//src: '../../blog/cssSkill.html'
-		if(src.match(/^\.\.\//)){
-			src = src.replace(/\.\.\//g,function(){
-				//每匹配到一个“../”，base_path向前退一位
-				base_path = base_path.replace(/\/[^\/]*\/$/,'/');
-				return '';
-			});
-		}
-		return base_path + src; 
-	}
 	//创建新的页面
 	function createNewPage(url){
         var oldIframe = private_activeIframe;
@@ -179,8 +192,9 @@
 		}
 		//监听iframe load事件
         utils.bind(iframe,'load',function(){
+            //移除老的iframe、动画层
 			oldIframe && utils.removeNode(oldIframe);
-			utils.removeNode(elem_loading);
+			elem_loading && utils.removeNode(elem_loading);
 			utils.css(iframe,{
 				height: ''
 			});
@@ -200,26 +214,7 @@
         //更新当前iframe标记
 		private_activeIframe = iframe;
 	}
-    //是否为不同域名
-    function isOutDomain(href){
-        var domain = (href || '').match(private_reg_domain);
-		return (domain && domain[0] != private_page_domain) ? true : false;
-    }
-	/**
-	 * 检测链接是为提供给js使用的地址
-     *   无地址、 javascript:: 、javascript:void(0)、#
-	 **/
-	function hrefForScript(href){
-		return (href.length == 0 || href.match(/^(javascript\s*\:|#)/)) ? true : false;
-	}
-	/**
-	 * 链接包含配置排除class
-	 **/
-	function linkExpectForSpa(link){
-		if(utils.hasClass(link,IFRAMER.expect_class)){
-			return true;
-		}
-	}
+   
     //绑定iframe事件
     function bindEventsForIframe(iWindow,iDoc){
 		//应对服务器可能重定向,或内部跳转
@@ -237,6 +232,7 @@
 
 		//更新网页标题
 		IFRAMER.updateTitle(iWindow.document.title);
+        
 		//处理非单页链接跳转问题
 		utils.bind(iWindow.document,'mousedown','a',function(evt){
 			var href = this.getAttribute('href') || '',
@@ -247,7 +243,7 @@
 				this.setAttribute('href',IFRAMER.default_url);
 			}
             //定义排除在SPA外的class，跨域名的链接，加上_blank
-			if(linkExpectForSpa(this) || isOutDomain(href)){
+			if(linkExpectForSpa(this) || isHrefOutDomain(href)){
 				this.setAttribute('target','_blank');
 			}
 		});
@@ -255,7 +251,7 @@
 		utils.bind(iWindow.document,'click','a' ,function(evt){
 			var href = this.getAttribute('href') || '';
             //不处理for script、跨域、定义排除在spa外的链接
-			if(hrefForScript(href) || isOutDomain(href) || linkExpectForSpa(this)){
+			if(hrefForScript(href) || isHrefOutDomain(href) || linkExpectForSpa(this)){
 				return;
 			}
 
@@ -335,36 +331,7 @@
 		});
 		
 		return toObj;
-	}	
-	/**
-	 * 判断是否支持css属性
-	 * 兼容css3
-	 */
-	var supports = (function() {
-		var styles = document.createElement('div').style,
-			vendors = 'Webkit Khtml Ms O Moz'.split(/\s/);
-		
-		return function(prop) {
-			var returns = false;
-			if ( prop in styles ){
-				returns = prop;
-			}else{
-				prop = prop.replace(/^[a-z]/, function(val) {
-					return val.toUpperCase();
-				});
-				each(vendors,function(i,value){
-					if ( value + prop in styles ) {
-						returns = ('-' + value + '-' + prop).toLowerCase();
-					}
-				});
-			}
-			return returns;
-		};
-	})();
-	
-	
-	var private_css3 = (supports('transition') && supports('transform')) ? true : false;
-	
+	}
 	/**
 	 * 判断dom是否拥有某个class
 	 */
@@ -436,99 +403,6 @@
 				setStyle(dom,key,value);
 			});
 		});
-	}
-	
-	/**
-	 * css3动画
-	 * 内部类，不检测参数
-	 */
-	function css3_anim(elem,cssObj,durtime,animType,onEnd){
-		//记录初始transition值
-		var transition_start = getStyle(elem,'transition');
-		var cssSet = clone(cssObj,{
-			'transition' : durtime + 'ms ' + animType
-		});
-		
-		//开启3d加速
-		if(!cssSet.transform){
-			cssSet.transform = 'translate3d(0, 0, 0)';
-		}else if(!cssSet.transform.match('translate3d')){
-			cssSet.transform = cssSet.transform + ' translate3d(0, 0, 0)';
-		}
-		/**
-		 * 动画结束回调
-		 */
-		function endFn(){
-			endFn = null;
-			elem.removeEventListener("webkitTransitionEnd",transitionFn, true);
-			//还原transition值
-			setCss(elem,{
-				'transition' : transition_start || 'all 0s'
-			});
-			onEnd && onEnd.call(elem);
-		}
-		
-		/**
-		 * 高大上的webkitTransitionEnd
-		 *   动画过程中，在每一帧持续触发
-		 */
-		var delay;
-		function transitionFn(){
-			clearTimeout(delay);
-			delay = setTimeout(function(){
-				endFn && endFn();
-			},40);
-		}
-		elem.addEventListener("webkitTransitionEnd",transitionFn, true);
-		
-		/**
-		 * 加一份保险
-		 *   解决 css无变化时webkitTransitionEnd事件不会被触发的问题
-		 */
-		setTimeout(function(){
-			endFn && endFn();
-		},durtime + 80);
-		
-		/**
-		 * 不知道为啥，若刚设置完css再修改同一属性，firefox下没效果
-		 *   可能是浏览器优化css动画的逻辑
-		 *	 故加定时器解决此bug
-		 */
-		setTimeout(function(){
-			setCss(elem,cssSet);
-		},10);
-	}
-	/**
-	 * css3动画
-	 * @param elem dom对象
-	 * @param cssObj 动画对象
-	 * @param durtime 持续时间
-	 * @param [animType] 缓动类型
-	 * @param [callback] 回调
-	 */
-	function animation(elem,cssObj,durtime,a,b) {
-        var animType = "linear",
-			onEnd = null;
-		
-		if (arguments.length < 3) {
-			throw new Error("missing arguments [dom,cssObj,durtime]");
-		} else {
-			if (TypeOf(a) == "function") {
-				onEnd = a;
-			}else if (typeof (a) == "string") {
-				animType = a;
-			}
-			
-			if (TypeOf(b) == "function") {
-				onEnd = b;
-			}
-		}
-		if(private_css3){
-			return css3_anim(elem,cssObj,durtime,animType,onEnd);
-		}else{
-			setCss(elem,cssObj);
-			onEnd && onEnd.call(elem);
-		}
 	}
 	
 	/**
@@ -630,16 +504,14 @@
 		each : each,
 		getStyle : getStyle,
 		css : setCss,
-		animation : animation,
-		supports : supports,
 		bind : bind,
 		clone : clone,
 		unbind : removeHandler,
 		hasClass : hasClass,
-		'addClass' : function (dom, cls) {
+		addClass : function (dom, cls) {
 			if (!this.hasClass(dom, cls)) dom.className += " " + cls;
 		},
-		'removeClass' : function (dom, cls) {
+		removeClass : function (dom, cls) {
 			if (hasClass(dom, cls)) {
 				var reg = new RegExp('(\\s|^)' + cls + '(\\s|$)');
 				dom.className = dom.className.replace(reg, ' ');
@@ -720,30 +592,6 @@
 					return returns;
 				};
 			}
-		})(),
-		//淡入
-		fadeIn : function (DOM,time,fn){
-			var op = getStyle(DOM,'opacity');
-			setCss(DOM,{
-				'opacity' : 0,
-				'display' : 'block'
-			});
-			animation(DOM,{
-				'opacity' : op
-			}, time, function(){
-				fn && fn.call(DOM);
-			});
-		},
-		//淡出
-		fadeOut : function (DOM,time,fn){
-			var op = getStyle(DOM,'opacity');
-			animation(DOM,{
-				'opacity' : 0
-			}, time,function(){
-				DOM.style.opacity = op;
-				DOM.style.display = 'none';
-				fn && fn.call(DOM);
-			});
-		}
+		})()
 	};
 });
