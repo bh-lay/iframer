@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-28 00:03
+ * @modified 2015-1-30 13:40
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -200,30 +200,22 @@
         //更新当前iframe标记
 		private_activeIframe = iframe;
 	}
+    //是否为不同域名
+    function isOutDomain(href){
+        var domain = (href || '').match(private_reg_domain);
+		return (domain && domain[0] != private_page_domain) ? true : false;
+    }
 	/**
-	 * 检测链接是否应该忽略
+	 * 检测链接是为提供给js使用的地址
+     *   无地址、 javascript:: 、javascript:void(0)、#
 	 **/
-	function hrefIgnoreForSPA(href){
-		var domain = href.match(private_reg_domain),
-			returns = false;
-		//无路径，不处理
-		if(href.length == 0){
-			returns = true;
-		}
-		//链接提供给JS使用，或锚点
-		if(href.match(/^(javascript\s*\:|#)/)){
-			returns = true;
-		}
-		//不同域名
-		if(domain && domain[0] != private_page_domain){
-			returns = true;
-		}
-		return returns;
+	function hrefForScript(href){
+		return (href.length == 0 || href.match(/^(javascript\s*\:|#)/)) ? true : false;
 	}
 	/**
 	 * 链接包含配置排除class
 	 **/
-	function linkExpect(link){
+	function linkExpectForSpa(link){
 		if(utils.hasClass(link,IFRAMER.expect_class)){
 			return true;
 		}
@@ -249,19 +241,21 @@
 		utils.bind(iWindow.document,'mousedown','a',function(evt){
 			var href = this.getAttribute('href') || '',
 				target = this.getAttribute('target');
-			//定义排除class，加上_blank,没有taget并且href不应该被忽略
-			if(linkExpect(this) || (!target && !hrefIgnoreForSPA(href))){
-				this.setAttribute('target','_blank');
-			}
+			
 			//若链接指向了最外层地址，更改为默认地址
 			if(href == private_basePage_path){
 				this.setAttribute('href',IFRAMER.default_url);
+			}
+            //定义排除在SPA外的class，跨域名的链接，加上_blank
+			if(linkExpectForSpa(this) || isOutDomain(href)){
+				this.setAttribute('target','_blank');
 			}
 		});
 		//监听iframe内 单页按钮点击事件
 		utils.bind(iWindow.document,'click','a' ,function(evt){
 			var href = this.getAttribute('href') || '';
-			if(hrefIgnoreForSPA(href) || linkExpect(this)){
+            //不处理for script、跨域、定义排除在spa外的链接
+			if(hrefForScript(href) || isOutDomain(href) || linkExpectForSpa(this)){
 				return;
 			}
 
