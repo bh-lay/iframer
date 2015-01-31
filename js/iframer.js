@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-1-30 14:09
+ * @modified 2015-1-31 23:55
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -107,19 +107,36 @@
 			}
 		}
 	})();
+    //抛出异常方法
+    var error = (console && console.error) ? console.error : function (message){
+        throw message;
+    };
+    
+    /**
+     * 三目运算的抽象
+     *   value的类型满足type，则用value，否则用defaults
+     *   若有transform，则返回的时候对value进行包装（不处理defaults）
+     **/
+    function isUseElse(type,value,defaults,transform){
+        return utils.TypeOf(value) == type ? (typeof transform == 'function' ? transform(value) : value) : defaults;
+    }
+    
     //IFRAMER 主对象
     var IFRAMER = {
         default_url : '/',
         expect_class : null,
         init : function (param){
+			if(top != window){
+				return;
+			}
             if(private_isInited){
-                console && console.error &&  console.error('iframer should be initialized only once');
+                error('iframer should be initialized only once');
             }else{
                 var param = param || {};
                 if(!param.container){
-                    console && console.error &&  console.error('missing arguement "container"');
+                    error('missing arguement "container"');
                 }else if(!utils.isDOM(param.container)){
-                    console && console.error &&  console.error('arguement "container" must be a dom');
+                    error('arguement "container" must be a dom');
                 }else{
                     INIT.call(this,param);
                 }
@@ -131,7 +148,7 @@
         updateTitle: function (title){
             if(private_beforeTitleChange){
                 var newTitle = private_beforeTitleChange(title);
-                title = newTitle ? newTitle : title;
+                title = isUseElse('string',newTitle,title);
             }
             document.title = title;
         },
@@ -144,11 +161,13 @@
 	//初始化
 	function INIT(param){
 		this.container = param.container;
-		this.expect_class = utils.TypeOf(param.expect_class) == 'string' ? param.expect_class : 'spa-expect-links';
-		this.default_url = utils.TypeOf(param.default_url) == 'string' ? hrefToAbsolute(param.default_url,LOCATION.pathname) : '/';
+		this.expect_class = isUseElse('string',param.expect_class,'spa-expect-links');
+		this.default_url = isUseElse('string',param.default_url,'/',function(){
+            return hrefToAbsolute(param.default_url,LOCATION.pathname)
+        });
 		
-		private_iframeOnload = utils.TypeOf(param.iframeOnload) == "function" ? param.iframeOnload : null;
-		private_beforeTitleChange = utils.TypeOf(param.beforeTitleChange) == "function" ? param.beforeTitleChange : null;
+		private_iframeOnload = isUseElse('function',param.iframeOnload,null);
+		private_beforeTitleChange = isUseElse('function',param.beforeTitleChange,null);
 		private_basePage_path = LOCATION.pathname;
 		private_page_domain = LOCATION.protocol + '//' + LOCATION.host;
 		
@@ -217,10 +236,12 @@
    
     //绑定iframe事件
     function bindEventsForIframe(iWindow,iDoc){
+        //获取当前iframe内的url
+		var newPath = decodeURIComponent(iWindow.location.href.replace(private_reg_domain,''));
 		//应对服务器可能重定向,或内部跳转
-		if(iWindow.location.pathname != getHash()){
-			//若重定向到了最外层地址
-			if(iWindow.location.pathname == private_basePage_path){
+		if(newPath != getHash()){
+			//若重定向到了最外层地址基础页面
+			if(newPath == private_basePage_path){
 				//跳转至默认页
 				changeHash(IFRAMER.default_url);
 			}else{
@@ -445,19 +466,6 @@
 		}
 	})();
 	
-	function checkEventForClass(event,classStr,dom){
-		var target = event.srcElement || event.target;
-		while (1) {
-			if(target == dom || !target){
-				return false;
-			}
-			if(hasClass(target,classStr)){
-				return target;
-			}
-			
-			target = target.parentNode;
-		}
-	}
 	function checkEventForTagname(event,tagName,dom){
 		var target = event.srcElement || event.target;
 		while (1) {
@@ -475,23 +483,14 @@
 		var className,tagName,fn;
 		if(typeof(a) == 'string'){
 			fn = b;
-			if(a.charAt(0) == '.'){
-				className = a.replace(/^\./,'');
-				callback = function(e){
-					var bingoDom = checkEventForClass(e,className,elem);
-					if(bingoDom){
-						fn && fn.call(bingoDom,e);
-					}
-				};
-			}else{
-				tagName = a;
-				callback = function(e){
-					var bingoDom = checkEventForTagname(e,tagName,elem);
-					if(bingoDom){
-						fn && fn.call(bingoDom,e);
-					}
-				};
-			}
+
+            tagName = a;
+            callback = function(e){
+                var bingoDom = checkEventForTagname(e,tagName,elem);
+                if(bingoDom){
+                    fn && fn.call(bingoDom,e);
+                }
+            };
 		}else{
 			callback = a;
 		}
