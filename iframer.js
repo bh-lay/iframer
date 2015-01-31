@@ -126,6 +126,9 @@
         default_url : '/',
         expect_class : null,
         init : function (param){
+			if(top != window){
+				return;
+			}
             if(private_isInited){
                 error('iframer should be initialized only once');
             }else{
