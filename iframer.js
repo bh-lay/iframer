@@ -233,8 +233,8 @@
    
     //绑定iframe事件
     function bindEventsForIframe(iWindow,iDoc){
-        //获取当前iframe内的ptah
-        var newPath = decodeURIComponent(iWindow.location.pathname);
+        //获取当前iframe内的url
+		var newPath = decodeURIComponent(iWindow.location.href.replace(private_reg_domain,''));
 		//应对服务器可能重定向,或内部跳转
 		if(newPath != getHash()){
 			//若重定向到了最外层地址基础页面
