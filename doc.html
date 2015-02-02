@@ -2,7 +2,7 @@
 <html lang="en-US">
 <head>
     <meta charset="UTF-8">
-	<title>简介</title>
+	<title>快速上手</title>
    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
     <script type="text/javascript">
         (function(){
@@ -30,23 +30,18 @@
 </head>
 <body>
 	<div class="banner">
-        <h1>iframer 简介</h1>
+        <h1>iframer 快速上手</h1>
     </div>
 	<div class="navigation">
 		<a class="spa-link" href="index.html">简介<span>index.html</span></a>
-		<a class="spa-link active" href="doc.html">如何使用<span>doc.html</span></a>
+		<a class="spa-link active" href="doc.html">快速上手<span>doc.html</span></a>
 		<a class="spa-link" href="more.html">进阶功能<span>more.html</span></a>
 		<a class="spa-link" href="help.html">帮助 <span>help.html</span></a>
 	</div>
 	<div class="container"><div class="article">
-        <h1>如何使用</h1>
-		<h3>先说下iframer的工作模式 <small>相信我，这段文字看完你就会懂的</small></h3>
-		<p>每个页面真实存在。在页面头部，通过JS判断当前浏览者是否为正常用户（避免google抓取页面的时候执行JS，导致出错），若为正常用户，则将当前URL以锚点（hash）跳转到指定的页面，这里我们称之为【页面A】。</p>
-		<p>在【页面A】中<code>iframer.js</code>会根据锚点（hash）显示对应的页面，并且调控链接跳转。</p>
-		<br/>
-		<h3>步骤一、全站配置</h3>
-		<p>所有需要跳转页面加上下述代码。<small>建议加在所有引用资源之前，以加快响应速度</small></p>
-		<pre><code>
+<h2>步骤一、全站配置</h2>
+<p>所有需要跳转页面加上下述代码。<small>建议加在所有引用资源之前，以加快响应速度</small></p>
+<pre><code>
  (function(){
 	var config = {
 		url : '/app.html' //注意：这里配置单页所在的路径
@@ -66,9 +61,9 @@
 		window.location.href = config.url + '#!' + location.href; 
 	}
 }());
-		</code></pre>
-		<h3>步骤二、主页面配置（上面提到的【页面A】）</h3>
-		<p>【页面A】只需要以下内容即可完成配置。<small>视项目情况修改iframer.js的路径</small></p>
+</code></pre>
+<h2>步骤二、主页面配置</h2>
+<p>【主页面】只需要以下内容即可完成配置。<small>视项目情况修改iframer.js的路径</small></p>
 <pre><code>
 &lt;!DOCTYPE HTML&gt;
 &lt;html lang="en-US"&gt;

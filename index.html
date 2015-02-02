@@ -34,20 +34,31 @@
     </div>
 	<div class="navigation">
 		<a class="spa-link active" href="index.html">简介<span>index.html</span></a>
-		<a class="spa-link" href="doc.html">如何使用<span>doc.html</span></a>
+		<a class="spa-link" href="doc.html">快速上手<span>doc.html</span></a>
 		<a class="spa-link" href="more.html">进阶功能<span>more.html</span></a>
 		<a class="spa-link" href="help.html">帮助<span>help.html</span></a>
 	</div>
 	<div class="container"><div class="article">
-        <h1>iframer</h1>
-<h3>一款基于iframe的单页应用组件（single page application）</h3>
+        <h1>一、iframer是什么</h1>
+<h4>一款基于iframe的单页应用组件（single page application）</h4>
 
-<h2>使用场景</h2>
+<h2>二、使用场景</h2>
 <p>音频、IM类站点，避免因页面跳转而引起的播放停顿、聊天状态丢失等问题。</p>
 
-<h2>优点</h2>
-<p>非前端MVC结构，不影响SEO。</p>
-<p>改造方便，相对于其他等单页应用框架，学习成本非常低。</p>
+<h2>三、优缺点</h2>
+<p><strong>优点：</strong>非前端MVC结构，不影响SEO。改造方便，相对于其他等单页应用框架，学习成本非常低。</p>
+<p><strong>不足：</strong>基于页面，颗粒度比较大，动效不够细腻。</p>
+
+<h2>四、iframer的工作模式 <small>相信我，这段文字看完你就会懂的</small></h2>
+<p>在已有站点的基础上新增一个页面，这里称之为【主页面】。</p>
+<p>在所有页面（不包括主页面），判断浏览者为正常用户，并且不处于iframe中，满足则跳转到【主页面】，其余情况不处理。</p>
+<p>在【主页面】中<code>iframer.js</code>会根据锚点（hash）显示对应的页面，并且调控个页面的链接跳转。</p>
+<h3>4.1、点击链接时的处理逻辑</h3>
+<p><strong>排除的链接：</strong>href为<code>javascript::</code>、<code>javascript:void(0)</code>、<code>#xxx</code>。</p>
+<p><strong>新窗口打开：</strong>不同域名，或包含定义时指定的<code>expect_class</code>。</p>
+<p>其余链接皆纳入iframer单页跳转的逻辑。已处理相对路径的计算。（<code>../../article.html</code>、<code>article/23.html</code> ）</p>
+<h3>4.2、页面有重定向怎么办？</h3>
+<p>iframer.js会监听页内跳转，实时修改url、页面title，若跳转到当前域名外（如：auth认证），不实时修改页面地址，规避因为浏览器同源策略引起的错误。</p>
 		</div></div>
 <a href="https://github.com/bh-lay/iframer" target="_blank"><img style="position: absolute; top: 0; right: 0; border: 0" src="style/star.bar.png" width="149" height="149" alt="Fork me on GitHub"></a>
 </body>
