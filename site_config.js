@@ -6,13 +6,14 @@
 	function isNormalUser(){
 		var UA = navigator.userAgent.toLowerCase();
 		var UAs = 'baiduspider,googlebot,youdaobot,360spider,msnbot,bingbot,sosospider,yahoo,sogou web spider,sogou orion spider'.split(',');
-		for(var i=0,total=UAs.length;i -1){
+		for(var i=0,total=UAs.length;i<total;i++){
+			if(UA.indexOf(UAs[i]) > -1){
 				return false;
 			}
 		}
 		return true;
 	}
 	if(top == this && isNormalUser()){
-		window.location.href = config.url + '#!' + location.href; 
+		window.location.href = config.url + '#!' + location.href;
 	}
 }());
