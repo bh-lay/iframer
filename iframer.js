@@ -209,8 +209,27 @@
 				height: 0
 			});
 		}
+		//加载超时（取消加载）
+		var timeoutListener = setTimeout(function(){
+			timeoutListener = 'timeout';
+			//删除loading蒙层
+			elem_loading && utils.removeNode(elem_loading);
+			if(oldIframe){
+				//移除新的iframe
+				utils.removeNode(iframe);
+				//静默修改地址
+				private_needRefresh = false;
+				changeHash(oldIframe.contentWindow.location.href,oldIframe.contentWindow);
+			}
+		},6000);
 		//监听iframe load事件
         utils.bind(iframe,'load',function(){
+			if(timeoutListener == 'timeout'){
+				return;
+			}
+			clearTimeout(timeoutListener);
+			//更新当前iframe标记
+			private_activeIframe = iframe;
             //移除老的iframe、动画层
 			oldIframe && utils.removeNode(oldIframe);
 			elem_loading && utils.removeNode(elem_loading);
@@ -230,8 +249,6 @@
 			}catch(e){}
 		});
 		
-        //更新当前iframe标记
-		private_activeIframe = iframe;
 	}
    
     //绑定iframe事件
