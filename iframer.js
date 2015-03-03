@@ -1,7 +1,7 @@
 /**
  * @author bh-lay
  * @github https://github.com/bh-lay/iframer/
- * @modified 2015-3-4 0:14
+ * @modified 2015-3-4 0:27
  */
 (function(window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
@@ -221,12 +221,9 @@
 				private_needRefresh = false;
 				changeHash(oldIframe.contentWindow.location.href,oldIframe.contentWindow);
 			}
-		},6000);
+		},4000);
 		//监听iframe load事件
         utils.bind(iframe,'load',function(){
-			if(timeoutListener == 'timeout'){
-				return;
-			}
 			clearTimeout(timeoutListener);
 			//更新当前iframe标记
 			private_activeIframe = iframe;
