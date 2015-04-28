@@ -3,11 +3,14 @@
  * @github https://github.com/bh-lay/iframer/
  * @modified 2015-3-4 0:27
  */
-(function(window,document,iframer_factory,utils_factory){
+(function (window,document,iframer_factory,utils_factory){
 	var utils = utils_factory(window,document);
     window.iframer = window.iframer || iframer_factory(window,document,utils);
 })(window,document,function(window,document,utils){
-    var private_activeIframe,
+        //当前激活状态的 page （PAGE实例化后的对象）
+    var private_active_page,
+        //最后一次加载的 page （PAGE实例化后的对象）
+        private_last_page,
 		//记录组件是否已被初始化
         private_isInited = false,
 		//主页面域名（包含协议）
@@ -144,6 +147,8 @@
         },
         //承载iframe的dom
         container : null,
+        //超时时长设置（毫秒）
+        timeout : 1000,
          //修改主页面title
         updateTitle: function (title){
             if(private_beforeTitleChange){
@@ -173,24 +178,52 @@
 		
 		var firstHash = (LOCATION.hash || '#!').replace(/^#\!/,'');
         
-        var active_page;
 		LOCATION.hash = '!' + (firstHash.length ? hrefToAbsolute(firstHash,LOCATION.pathname) : this.default_url);
 		setTimeout(function(){
 			//监听hashchange事件
 			onhashchange(function(url){
+                console.log('hashchange');
+                // 不需要更新 iframe 结束运行
 				if(!private_needRefresh){
-					private_needRefresh = true;
+                    private_needRefresh = true;
 					return;
 				}
 				url = url || IFRAMER.default_url;
+                
+                //若 URL 为单页基础 URL，转为默认 URL
 				if(url == private_basePage_path){
 					url = IFRAMER.default_url;
 					changeHash(url);
 				}else{
-                    if(active_page && active_page.status == 'loading'){
-                        active_page.destroy();
+                    //
+                    if(private_last_page){
+                        if(private_last_page.url == url){
+                            //同一 URL 不处理，避免重复点击
+                            return
+                        } else if(private_last_page.status == 'loading'){
+                            //不同 URL ，且上一页面正在加载中，销毁上一个页面
+                            private_last_page.destroy();
+                        }
                     }
-					active_page = new PAGE(url);
+					private_last_page = new PAGE(url,{
+                        onLoad : function(){
+                            //销毁老的页面
+                            private_active_page && private_active_page.destroy();
+                            //更新当前iframe标记
+                            private_active_page = this;
+                        },
+                        onTimeout : function(){
+                            console.log('timeout')
+                            if(private_active_page){
+                                //超时，且当前有页面，销毁自己
+                                this.destroy();
+                                //静默修改地址
+                                console.log('private_active_page',private_active_page);
+                                private_needRefresh = false;
+                                changeHash(private_active_page.url,private_active_page.iframe.contentWindow);
+                            }
+                        }
+                    });
 				}
 			});
 		});
@@ -198,42 +231,39 @@
 		private_isInited = true;
 	}
 	
-	//创建新的页面
-	function PAGE(url){
+	/**
+     * 创建新的页面
+     *
+     **/
+	function PAGE(url,param){
         var me = this,
-            oldIframe = private_activeIframe;
-		var iframe = document.createElement('iframe');
-		iframe.src= url;
-		iframe.frameBorder = 0;
-		
+            onLoad = param.onLoad || null,
+            onTimeout = param.onTimeout || null,
+            iframe = document.createElement('iframe');
+        
         this.iframe = iframe;
         this.status = 'loading';
+        this.url = url;
         
-        IFRAMER.container.appendChild(iframe);
-		if(oldIframe){
+		iframe.src= url;
+		iframe.frameBorder = 0;
+        if(private_active_page){
 			utils.css(iframe,{
 				height: 0
 			});
 		}
+        IFRAMER.container.appendChild(iframe);
+		
 		//加载超时（取消加载）
 		me.timeoutListener = setTimeout(function(){
-			timeoutListener = 'timeout';
-			if(oldIframe){
-				//移除新的iframe
-				utils.removeNode(iframe);
-				//静默修改地址
-				private_needRefresh = false;
-				changeHash(oldIframe.contentWindow.location.href,oldIframe.contentWindow);
-			}
-		},10000);
+			onTimeout && onTimeout.call(me);
+		},IFRAMER.timeout);
 		//监听iframe load事件
         utils.bind(iframe,'load',function(){
             me.status = 'loaded';
 			clearTimeout(me.timeoutListener);
-			//更新当前iframe标记
-			private_activeIframe = iframe;
-            //移除老的iframe、动画层
-			oldIframe && utils.removeNode(oldIframe);
+            
+            onLoad && onLoad.call(me);
 			utils.css(iframe,{
 				height: ''
 			});
@@ -253,6 +283,7 @@
     PAGE.prototype.destroy = function(){
         clearTimeout(this.timeoutListener);
         this.iframe && utils.removeNode(this.iframe);
+        this.iframe = this.status = this.url = null;
     };
     //绑定iframe事件
     function bindEventsForIframe(iWindow,iDoc){
