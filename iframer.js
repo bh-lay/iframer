@@ -30,10 +30,14 @@
 	function getHash(hashStr){
 		return (hashStr || LOCATION.hash || '#!').replace(/^#!/,'')
 	}
-	//修改hash
-	function changeHash(url,win){
-		win = win || window;
-		url = hrefToAbsolute(url,win.location.pathname);
+	/**
+     * 修改hash
+     *   isSilence: 不需要更新页面
+     **/
+	function changeHash(url,win,isSilence){
+        private_needRefresh = isSilence ? false : true;
+        
+		url = hrefToAbsolute(url,(win || window).location.pathname);
 		if(url.length < 1){
 			return
 		}
@@ -148,7 +152,7 @@
         //承载iframe的dom
         container : null,
         //超时时长设置（毫秒）
-        timeout : 1000,
+        timeout : 6000,
          //修改主页面title
         updateTitle: function (title){
             if(private_beforeTitleChange){
@@ -182,7 +186,6 @@
 		setTimeout(function(){
 			//监听hashchange事件
 			onhashchange(function(url){
-                console.log('hashchange');
                 // 不需要更新 iframe 结束运行
 				if(!private_needRefresh){
                     private_needRefresh = true;
@@ -213,14 +216,12 @@
                             private_active_page = this;
                         },
                         onTimeout : function(){
-                            console.log('timeout')
                             if(private_active_page){
                                 //超时，且当前有页面，销毁自己
                                 this.destroy();
-                                //静默修改地址
-                                console.log('private_active_page',private_active_page);
-                                private_needRefresh = false;
-                                changeHash(private_active_page.url,private_active_page.iframe.contentWindow);
+                                
+                                //静默修改地址                                
+                                changeHash(private_active_page.url,private_active_page.iframe.contentWindow,true);
                             }
                         }
                     });
@@ -297,8 +298,7 @@
 				changeHash(IFRAMER.default_url);
 			}else{
 				//静默修改地址
-				private_needRefresh = false;
-				changeHash(iWindow.location.href,iWindow);
+				changeHash(iWindow.location.href,iWindow,true);
 			}
 		}
 
@@ -572,30 +572,6 @@
         } : function(obj){
             return obj && typeof obj === 'object' && obj.nodeType === 1 && typeof obj.nodeName === 'string';
         },
-		/**
-		 * 页面加载
-		 */
-		ready : (function(){
-			var readyFns = [];
-			function completed() {
-				removeHandler(document,"DOMContentLoaded", completed);
-				removeHandler(window,"load", completed);
-				each(readyFns,function(i,fn){
-					fn();
-				});
-				readyFns = null;
-			}
-			return function (callback){
-				if ( document.readyState === "complete" ) {
-					callback && callback();
-				} else {
-					callback && readyFns.push(callback);
-					
-					bindHandler(document,'DOMContentLoaded',completed);
-					bindHandler(window,'load',completed);
-				}
-			}
-		})(),
 		//创建dom
 		createDom : function (html){
 			var a = document.createElement('div');
