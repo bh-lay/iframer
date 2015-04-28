@@ -172,7 +172,8 @@
 		private_page_domain = LOCATION.protocol + '//' + LOCATION.host;
 		
 		var firstHash = (LOCATION.hash || '#!').replace(/^#\!/,'');
-
+        
+        var active_page;
 		LOCATION.hash = '!' + (firstHash.length ? hrefToAbsolute(firstHash,LOCATION.pathname) : this.default_url);
 		setTimeout(function(){
 			//监听hashchange事件
@@ -186,7 +187,10 @@
 					url = IFRAMER.default_url;
 					changeHash(url);
 				}else{
-					createNewPage(url);
+                    if(active_page && active_page.status == 'loading'){
+                        active_page.destroy();
+                    }
+					active_page = new PAGE(url);
 				}
 			});
 		});
@@ -195,25 +199,25 @@
 	}
 	
 	//创建新的页面
-	function createNewPage(url){
-        var oldIframe = private_activeIframe;
-		var iframe = document.createElement('iframe'); 
-		var elem_loading = utils.createDom('<div style=position:absolute;top:0;left:0;width:100%;height:100%;opacity:.5></div>')[0];
+	function PAGE(url){
+        var me = this,
+            oldIframe = private_activeIframe;
+		var iframe = document.createElement('iframe');
 		iframe.src= url;
 		iframe.frameBorder = 0;
 		
+        this.iframe = iframe;
+        this.status = 'loading';
+        
         IFRAMER.container.appendChild(iframe);
-        IFRAMER.container.appendChild(elem_loading);
 		if(oldIframe){
 			utils.css(iframe,{
 				height: 0
 			});
 		}
 		//加载超时（取消加载）
-		var timeoutListener = setTimeout(function(){
+		me.timeoutListener = setTimeout(function(){
 			timeoutListener = 'timeout';
-			//删除loading蒙层
-			elem_loading && utils.removeNode(elem_loading);
 			if(oldIframe){
 				//移除新的iframe
 				utils.removeNode(iframe);
@@ -221,15 +225,15 @@
 				private_needRefresh = false;
 				changeHash(oldIframe.contentWindow.location.href,oldIframe.contentWindow);
 			}
-		},4000);
+		},10000);
 		//监听iframe load事件
         utils.bind(iframe,'load',function(){
-			clearTimeout(timeoutListener);
+            me.status = 'loaded';
+			clearTimeout(me.timeoutListener);
 			//更新当前iframe标记
 			private_activeIframe = iframe;
             //移除老的iframe、动画层
 			oldIframe && utils.removeNode(oldIframe);
-			elem_loading && utils.removeNode(elem_loading);
 			utils.css(iframe,{
 				height: ''
 			});
@@ -245,9 +249,11 @@
 				bindEventsForIframe(iWindow,iDoc);
 			}catch(e){}
 		});
-		
 	}
-   
+    PAGE.prototype.destroy = function(){
+        clearTimeout(this.timeoutListener);
+        this.iframe && utils.removeNode(this.iframe);
+    };
     //绑定iframe事件
     function bindEventsForIframe(iWindow,iDoc){
         //获取当前iframe内的url
