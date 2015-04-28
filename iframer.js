@@ -3,10 +3,10 @@
  * @github https://github.com/bh-lay/iframer/
  * @modified 2015-3-4 0:27
  */
-(function (window,document,iframer_factory,utils_factory){
-	var utils = utils_factory(window,document);
-    window.iframer = window.iframer || iframer_factory(window,document,utils);
-})(window,document,function(window,document,utils){
+(function (window, document, iframer_factory, utils_factory) {
+	var utils = utils_factory(window, document);
+    window.iframer = window.iframer || iframer_factory(window, document, utils);
+})(window, document, function(window, document, utils) {
         //当前激活状态的 page （PAGE实例化后的对象）
     var private_active_page,
         //最后一次加载的 page （PAGE实例化后的对象）
@@ -27,18 +27,18 @@
 		LOCATION = window.location;
     
 	//获取最新的hash
-	function getHash(hashStr){
+	function getHash(hashStr) {
 		return (hashStr || LOCATION.hash || '#!').replace(/^#!/,'')
 	}
 	/**
      * 修改hash
      *   isSilence: 不需要更新页面
      **/
-	function changeHash(url,win,isSilence){
+	function changeHash(url,win,isSilence) {
         private_needRefresh = isSilence ? false : true;
         
 		url = hrefToAbsolute(url,(win || window).location.pathname);
-		if(url.length < 1){
+		if(url.length < 1) {
 			return
 		}
 		LOCATION.hash = '!' + decodeURIComponent(url);
@@ -48,19 +48,19 @@
 	 *	如  '../../blog/cssSkill.html','blog/cssSkill.html'
      *  至  '/xxx/xxx'
 	 **/
-	function hrefToAbsolute(src,base_path){
+	function hrefToAbsolute(src,base_path) {
 		// 截断域名
 		src = src.replace(private_reg_domain,'');
 
 		//符合要求，直接返回src: /blog/cssSkill.html
-		if(src.charAt(0) == "/"){
+		if(src.charAt(0) == "/") {
 			return src;
 		}
 		
 		base_path = /^[^?#]*\//.exec(base_path)[0];
 		//处理 '../'
-		if(src.match(/^\.\.\//)){
-			src = src.replace(/\.\.\//g,function(){
+		if(src.match(/^\.\.\//)) {
+			src = src.replace(/\.\.\//g,function() {
 				//每匹配到一个“../”，base_path向前退一位
 				base_path = base_path.replace(/\/[^\/]*\/$/,'/');
 				return '';
@@ -69,7 +69,7 @@
 		return base_path + src; 
 	}
      //是否为不同域名
-    function isHrefOutDomain(href){
+    function isHrefOutDomain(href) {
         var domain = (href || '').match(private_reg_domain);
 		return (domain && domain[0] != private_page_domain) ? true : false;
     }
@@ -77,35 +77,35 @@
 	 * 检测链接是为提供给js使用的地址
      *   无地址、 javascript:: 、javascript:void(0)、#
 	 **/
-	function hrefForScript(href){
+	function hrefForScript(href) {
 		return (href.length == 0 || href.match(/^(javascript\s*\:|#)/)) ? true : false;
 	}
 	/**
 	 * 链接包含配置排除class
 	 **/
-	function linkExpectForSpa(link){
-		if(utils.hasClass(link,IFRAMER.expect_class)){
+	function linkExpectForSpa(link) {
+		if(utils.hasClass(link,IFRAMER.expect_class)) {
 			return true;
 		}
 	}
-	var onhashchange = (function(){
+	var onhashchange = (function() {
 		var documentMode = document.documentMode,
 			supportHashChange = ('onhashchange' in window) && ( documentMode === void 0 || documentMode > 7 );
-		if(supportHashChange){
-			return function(callback){
-				window.onhashchange = function(e){
+		if(supportHashChange) {
+			return function(callback) {
+				window.onhashchange = function(e) {
 					callback && callback(getHash());
 				};
 				callback && callback(getHash());
 			}
 		}else{
-			return function (callback){
+			return function (callback) {
 				//记录hash值
 				var private_oldHash = LOCATION.hash;
-				setInterval(function(){
+				setInterval(function() {
 					var new_hash = LOCATION.hash || '#';
 					//hash发生变化
-					if(new_hash != private_oldHash){
+					if(new_hash != private_oldHash) {
 						private_oldHash = new_hash;
 						callback && callback(getHash(new_hash));
 					}
@@ -115,7 +115,7 @@
 		}
 	})();
     //抛出异常方法
-    var error = (console && console.error) ? console.error : function (message){
+    var error = (console && console.error) ? console.error : function (message) {
         throw message;
     };
     
@@ -124,7 +124,7 @@
      *   value的类型满足type，则用value，否则用defaults
      *   若有transform，则返回的时候对value进行包装（不处理defaults）
      **/
-    function isUseElse(type,value,defaults,transform){
+    function isUseElse(type,value,defaults,transform) {
         return utils.TypeOf(value) == type ? (typeof transform == 'function' ? transform(value) : value) : defaults;
     }
     
@@ -132,17 +132,17 @@
     var IFRAMER = {
         default_url : '/',
         expect_class : null,
-        init : function (param){
-			if(top != window){
+        init : function (param) {
+			if(top != window) {
 				return;
 			}
-            if(private_isInited){
+            if(private_isInited) {
                 error('iframer should be initialized only once');
             }else{
                 var param = param || {};
-                if(!param.container){
+                if(!param.container) {
                     error('missing arguement "container"');
-                }else if(!utils.isDOM(param.container)){
+                }else if(!utils.isDOM(param.container)) {
                     error('arguement "container" must be a dom');
                 }else{
                     INIT.call(this,param);
@@ -152,10 +152,10 @@
         //承载iframe的dom
         container : null,
         //超时时长设置（毫秒）
-        timeout : 6000,
+        timeout : 10000,
          //修改主页面title
-        updateTitle: function (title){
-            if(private_beforeTitleChange){
+        updateTitle: function (title) {
+            if(private_beforeTitleChange) {
                 var newTitle = private_beforeTitleChange(title);
                 title = isUseElse('string',newTitle,title);
             }
@@ -168,10 +168,10 @@
         jumpTo : changeHash
     };
 	//初始化
-	function INIT(param){
+	function INIT(param) {
 		this.container = param.container;
 		this.expect_class = isUseElse('string',param.expect_class,'spa-expect-links');
-		this.default_url = isUseElse('string',param.default_url,'/',function(){
+		this.default_url = isUseElse('string',param.default_url,'/',function() {
             return hrefToAbsolute(param.default_url,LOCATION.pathname)
         });
 		
@@ -183,40 +183,40 @@
 		var firstHash = (LOCATION.hash || '#!').replace(/^#\!/,'');
         
 		LOCATION.hash = '!' + (firstHash.length ? hrefToAbsolute(firstHash,LOCATION.pathname) : this.default_url);
-		setTimeout(function(){
+		setTimeout(function() {
 			//监听hashchange事件
-			onhashchange(function(url){
+			onhashchange(function(url) {
                 // 不需要更新 iframe 结束运行
-				if(!private_needRefresh){
+				if(!private_needRefresh) {
                     private_needRefresh = true;
 					return;
 				}
 				url = url || IFRAMER.default_url;
                 
                 //若 URL 为单页基础 URL，转为默认 URL
-				if(url == private_basePage_path){
+				if(url == private_basePage_path) {
 					url = IFRAMER.default_url;
 					changeHash(url);
 				}else{
                     //
-                    if(private_last_page){
-                        if(private_last_page.url == url){
+                    if(private_last_page) {
+                        if(private_last_page.url == url) {
                             //同一 URL 不处理，避免重复点击
                             return
-                        } else if(private_last_page.status == 'loading'){
+                        } else if(private_last_page.status == 'loading') {
                             //不同 URL ，且上一页面正在加载中，销毁上一个页面
                             private_last_page.destroy();
                         }
                     }
 					private_last_page = new PAGE(url,{
-                        onLoad : function(){
+                        onLoad : function() {
                             //销毁老的页面
-                            private_active_page && private_active_page.destroy();
+                            private_active_page && private_active_page != this && private_active_page.destroy();
                             //更新当前iframe标记
                             private_active_page = this;
                         },
-                        onTimeout : function(){
-                            if(private_active_page){
+                        onTimeout : function() {
+                            if(private_active_page) {
                                 //超时，且当前有页面，销毁自己
                                 this.destroy();
                                 
@@ -236,10 +236,10 @@
      * 创建新的页面
      *
      **/
-	function PAGE(url,param){
+	function PAGE(url,param) {
         var me = this,
-            onLoad = param.onLoad || null,
-            onTimeout = param.onTimeout || null,
+            onLoad = isUseElse('function',param.onLoad,null),
+            onTimeout = isUseElse('function',param.onTimeout,null),
             iframe = document.createElement('iframe');
         
         this.iframe = iframe;
@@ -248,7 +248,7 @@
         
 		iframe.src= url;
 		iframe.frameBorder = 0;
-        if(private_active_page){
+        if(private_active_page) {
 			utils.css(iframe,{
 				height: 0
 			});
@@ -256,11 +256,11 @@
         IFRAMER.container.appendChild(iframe);
 		
 		//加载超时（取消加载）
-		me.timeoutListener = setTimeout(function(){
+		me.timeoutListener = setTimeout(function() {
 			onTimeout && onTimeout.call(me);
 		},IFRAMER.timeout);
 		//监听iframe load事件
-        utils.bind(iframe,'load',function(){
+        utils.bind(iframe,'load',function() {
             me.status = 'loaded';
 			clearTimeout(me.timeoutListener);
             
@@ -278,22 +278,22 @@
 
 				//监听事件
 				bindEventsForIframe(iWindow,iDoc);
-			}catch(e){}
+			}catch(e) {}
 		});
 	}
-    PAGE.prototype.destroy = function(){
+    PAGE.prototype.destroy = function() {
         clearTimeout(this.timeoutListener);
         this.iframe && utils.removeNode(this.iframe);
         this.iframe = this.status = this.url = null;
     };
     //绑定iframe事件
-    function bindEventsForIframe(iWindow,iDoc){
+    function bindEventsForIframe(iWindow,iDoc) {
         //获取当前iframe内的url
 		var newPath = decodeURIComponent(iWindow.location.href.replace(private_reg_domain,''));
 		//应对服务器可能重定向,或内部跳转
-		if(newPath != getHash()){
+		if(newPath != getHash()) {
 			//若重定向到了最外层地址基础页面
-			if(newPath == private_basePage_path){
+			if(newPath == private_basePage_path) {
 				//跳转至默认页
 				changeHash(IFRAMER.default_url);
 			}else{
@@ -306,24 +306,24 @@
 		IFRAMER.updateTitle(iWindow.document.title);
         
 		//处理非单页链接跳转问题
-		utils.bind(iWindow.document,'mousedown','a',function(evt){
+		utils.bind(iWindow.document,'mousedown','a',function(evt) {
 			var href = this.getAttribute('href') || '',
 				target = this.getAttribute('target');
 			
 			//若链接指向了最外层地址，更改为默认地址
-			if(href == private_basePage_path){
+			if(href == private_basePage_path) {
 				this.setAttribute('href',IFRAMER.default_url);
 			}
             //定义排除在SPA外的class，跨域名的链接，加上_blank
-			if(linkExpectForSpa(this) || isHrefOutDomain(href)){
+			if(linkExpectForSpa(this) || isHrefOutDomain(href)) {
 				this.setAttribute('target','_blank');
 			}
 		});
 		//监听iframe内 单页按钮点击事件
-		utils.bind(iWindow.document,'click','a' ,function(evt){
+		utils.bind(iWindow.document,'click','a' ,function(evt) {
 			var href = this.getAttribute('href') || '';
             //不处理for script、跨域、定义排除在spa外的链接
-			if(hrefForScript(href) || isHrefOutDomain(href) || linkExpectForSpa(this)){
+			if(hrefForScript(href) || isHrefOutDomain(href) || linkExpectForSpa(this)) {
 				return;
 			}
 
@@ -355,7 +355,7 @@
 	 * 检测是否为数字
 	 * 兼容字符类数字 '23'
 	 */
-	function isNum(ipt){
+	function isNum(ipt) {
 		return (ipt !== '') && (ipt == +ipt) ? true : false;
 	}
 	
@@ -363,24 +363,24 @@
  	 * 遍历数组或对象
 	 * 
 	 */
-	function each(arr,fn){
+	function each(arr,fn) {
 		//检测输入的值
-		if(typeof(arr) != 'object' || typeof(fn) != 'function'){
+		if(typeof(arr) != 'object' || typeof(fn) != 'function') {
 			return;
 		}
 		var Length = arr.length;
-		if( isNum(Length) ){
-			for(var i=0;i<Length;i++){
-				if(fn.call(this,i,arr[i]) === false){
+		if( isNum(Length) ) {
+			for(var i=0;i<Length;i++) {
+				if(fn.call(this,i,arr[i]) === false) {
 					break
 				}
 			}
 		}else{
-			for(var i in arr){
-				if (!arr.hasOwnProperty(i)){
+			for(var i in arr) {
+				if (!arr.hasOwnProperty(i)) {
 					continue;
 				}
-				if(fn.call(this,i,arr[i]) === false){
+				if(fn.call(this,i,arr[i]) === false) {
 					break
 				}
 			}
@@ -391,9 +391,9 @@
 	 * 对象拷贝
 	 *
 	 */
-	function clone(fromObj,toObj){
-		each(fromObj,function(i,item){
-			if(typeof item == "object"){   
+	function clone(fromObj,toObj) {
+		each(fromObj,function(i,item) {
+			if(typeof item == "object") {   
 				toObj[i] = item.constructor==Array ? [] : {};
 				
 				clone(item,toObj[i]);
@@ -407,7 +407,7 @@
 	/**
 	 * 判断dom是否拥有某个class
 	 */
-	function hasClass(dom,classSingle){
+	function hasClass(dom,classSingle) {
 		return dom.className && dom.className.match(new RegExp('(\\s|^)' + classSingle + '(\\s|$)')) || false;
 	}
 	
@@ -415,7 +415,7 @@
 	function getStyle(elem, prop) {
 		var value;
 		prop == "borderWidth" ? prop = "borderLeftWidth" : prop;
-		if (elem.style[prop]){
+		if (elem.style[prop]) {
 			value = elem.style[prop];
 		} else if(document.defaultView) {
 			var style = document.defaultView.getComputedStyle(elem, null);
@@ -425,16 +425,16 @@
 		}
 		
 		
-		if (/\px$/.test(value)){
+		if (/\px$/.test(value)) {
 			value = parseInt(value);
-		}else if (isNum(value) ){
+		}else if (isNum(value) ) {
 			value = Number(value);
-		} else if(value == '' || value == 'medium'){
+		} else if(value == '' || value == 'medium') {
 			value = 0;
-		} else if (value == 'auto'){
-			if(prop == 'height'){
+		} else if (value == 'auto') {
+			if(prop == 'height') {
 				value = elem.clientHeight;
-			}else if(prop == 'width'){
+			}else if(prop == 'width') {
 				value = elem.clientWidth;
 			}
 		}
@@ -446,32 +446,32 @@
 	/**
 	 * dom设置样式
 	 */
-	function setStyle(elem,prop,value){
+	function setStyle(elem,prop,value) {
 		prop = prop.toString();
 		if (prop == "opacity") {
 			elem.style.filter = 'alpha(opacity=' + (value * 100)+ ')';
 			value = value;
-		} else if ( isNum(value) && prop != 'zIndex'){
+		} else if ( isNum(value) && prop != 'zIndex') {
 			value = value + "px";
 		}
 		elem.style[prop] = value;
 	}
 	//设置css
-	function setCss(doms,cssObj){
+	function setCss(doms,cssObj) {
 		doms = [].concat(doms);
 		
 		/**
 		 * 为css3属性增加扩展
 		 */
-		each(cssObj,function(key,value){
-			if(key == 'transform' || key == 'transition'){
-				each(['webkit','o','moz'],function(i,text){
+		each(cssObj,function(key,value) {
+			if(key == 'transform' || key == 'transition') {
+				each(['webkit','o','moz'],function(i,text) {
 					cssObj['-' + text + '-' + key] = value
 				});
 			}
 		});
-		each(doms,function(i,dom){
-			each(cssObj,function(key,value){
+		each(doms,function(i,dom) {
+			each(cssObj,function(key,value) {
 				setStyle(dom,key,value);
 			});
 		});
@@ -517,28 +517,28 @@
 		}
 	})();
 	
-	function checkEventForTagname(event,tagName,dom){
+	function checkEventForTagname(event,tagName,dom) {
 		var target = event.srcElement || event.target;
 		while (1) {
-			if(target == dom || !target){
+			if(target == dom || !target) {
 				return false;
 			}
-			if(target.tagName.toLocaleLowerCase() == tagName){
+			if(target.tagName.toLocaleLowerCase() == tagName) {
 				return target;
 			}
 			
 			target = target.parentNode;
 		}
 	}
-	function bind(elem, type,a,b){
+	function bind(elem, type,a,b) {
 		var className,tagName,fn;
-		if(typeof(a) == 'string'){
+		if(typeof(a) == 'string') {
 			fn = b;
 
             tagName = a;
-            callback = function(e){
+            callback = function(e) {
                 var bingoDom = checkEventForTagname(e,tagName,elem);
-                if(bingoDom){
+                if(bingoDom) {
                     fn && fn.call(bingoDom,e);
                 }
             };
@@ -567,19 +567,19 @@
 				dom.className = dom.className.replace(reg, ' ');
 			}
 		},
-        isDOM : ( typeof HTMLElement === 'object' ) ? function(obj){
+        isDOM : ( typeof HTMLElement === 'object' ) ? function(obj) {
             return obj instanceof HTMLElement;
-        } : function(obj){
+        } : function(obj) {
             return obj && typeof obj === 'object' && obj.nodeType === 1 && typeof obj.nodeName === 'string';
         },
 		//创建dom
-		createDom : function (html){
+		createDom : function (html) {
 			var a = document.createElement('div');
 			a.innerHTML = html;
 			return a.childNodes;
 		},
 		//在指定DOM后插入新DOM
-		insertAfter : function (newElement, targetElement){
+		insertAfter : function (newElement, targetElement) {
 			var parent = targetElement.parentNode;
 			if (parent.lastChild == targetElement) {
 				//如果最后的节点是目标元素，则直接追加
@@ -590,28 +590,28 @@
 			}
 		},
 		//移除dom节点
-		removeNode : function (elem){  
-			if(elem && elem.parentNode && elem.tagName != 'BODY'){  
+		removeNode : function (elem) {  
+			if(elem && elem.parentNode && elem.tagName != 'BODY') {  
 				elem.parentNode.removeChild(elem);  
 			}  
 		},
 		//根据class查找元素
-		findByClassName : (function(){
-			if(typeof(document.getElementsByClassName) !== 'undefined'){
+		findByClassName : (function() {
+			if(typeof(document.getElementsByClassName) !== 'undefined') {
 				//支持gEbCN
-				return function (dom,classStr){
+				return function (dom,classStr) {
 					return dom.getElementsByClassName(classStr);
 				};
 			}else{
 				//无奈采用遍历法
-				return function (dom,classStr){
+				return function (dom,classStr) {
 					var returns = [];
 					//尝试获取所有元素
 					var caches = dom.getElementsByTagName("*");
 					//遍历结果
-					each(caches,function(i,thisDom){
+					each(caches,function(i,thisDom) {
 						//检查class是否合法
-						if(hasClass(thisDom,classStr)){
+						if(hasClass(thisDom,classStr)) {
 							returns.push(thisDom);
 						}
 					});
